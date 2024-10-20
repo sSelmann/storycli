@@ -15,7 +15,7 @@ if [ "$ARCH" == "x86_64" ]; then
 fi
 
 # Define the download URL for storycli
-DOWNLOAD_URL="https://github.com/sSelmann/storycli/releases/download/${VERSION}/storycli-${OS}-${ARCH}"
+DOWNLOAD_URL="https://github.com/sSelmann/storycli/releases/download/${VERSION}/scli-${OS}-${ARCH}"
 
 # Check if Go is installed and the version
 REQUIRED_GO_VERSION="go1.22.4"
@@ -58,13 +58,13 @@ fi
 
 # Download the storycli binary
 echo "Downloading storycli ${VERSION} for ${OS}/${ARCH}..."
-curl -L $DOWNLOAD_URL -o storycli
+curl -L $DOWNLOAD_URL -o scli
 
 # Make it executable
-chmod +x storycli
+chmod +x scli
 
 # Move it to /usr/local/bin
 echo "Installing storycli to /usr/local/bin..."
-sudo mv storycli /usr/local/bin/
+sudo mv scli /usr/local/bin/
 
 echo "storycli installed successfully!"
