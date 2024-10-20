@@ -16,6 +16,13 @@ It has commands to make your work easier and save your time.`,
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
+func completionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "completion",
+		Short: "Generate the autocompletion script for the specified shell",
+	}
+}
+
 // Execute executes the root command.
 func Execute() {
 	err := rootCmd.Execute()
@@ -25,6 +32,11 @@ func Execute() {
 }
 
 func init() {
+	completion := completionCommand()
+
+	// mark completion hidden
+	completion.Hidden = true
+	rootCmd.AddCommand(completion)
+
 	rootCmd.Flags().BoolP("help", "h", false, "help for storycli")
 }
-
