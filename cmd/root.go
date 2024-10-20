@@ -12,8 +12,6 @@ var rootCmd = &cobra.Command{
 	Short: "Story CLI is built for setting up and managing your Story node.",
 	Long: `Story CLI is built for setting up and managing your Story node.
 It has commands to make your work easier and save your time.`,
-
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 func completionCommand() *cobra.Command {

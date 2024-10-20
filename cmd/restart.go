@@ -71,7 +71,6 @@ func displayRestart(serviceName string) error {
 
 	err := cmd.Run()
 
-	// Servis durumu ne olursa olsun çıktıyı göster
 	if out.Len() > 0 {
 		fmt.Println(out.String())
 	}
@@ -85,7 +84,6 @@ func displayRestart(serviceName string) error {
 		if errors.As(err, &exitErr) {
 			return nil
 		} else {
-			// Diğer türde hatalar için uyarı göster
 			printWarning(fmt.Sprintf("Failed to get status for %s service.", serviceName))
 			return err
 		}

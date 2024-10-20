@@ -17,7 +17,7 @@ var statusCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(statusCmd) // rootCmd, ana komutunuzun adı olabilir. Projenize göre değiştirin.
+	rootCmd.AddCommand(statusCmd)
 }
 
 // runStatus executes the status command logic
@@ -43,9 +43,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		printInfo("Fetching status for 'story' service...")
 		err = displayServiceStatus("story")
 		if err != nil {
-			// Hatanın devam etmesine gerek yok, ancak fonksiyonun çıktısını görmek için
-			// zaten displayServiceStatus fonksiyonu çıktıyı gösteriyor
-			// İsteğe bağlı olarak burada işlemlere devam edebilirsiniz
+
 		}
 	} else {
 		printWarning("'story' service is not installed.")
@@ -55,7 +53,6 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		printInfo("Fetching status for 'story-geth' service...")
 		err = displayServiceStatus("story-geth")
 		if err != nil {
-			// Aynı şekilde, hatanın devam etmesine gerek yok
 		}
 	} else {
 		printWarning("'story-geth' service is not installed.")
@@ -74,12 +71,9 @@ func checkServiceExists(serviceName string) (bool, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		// Eğer komut çalıştırılamazsa, servisin mevcut olmadığını varsayabiliriz
 		return false, nil
 	}
 
-	// Çıktıda servisin adı olup olmadığını kontrol et
-	// "story.service" satırını arıyoruz
 	return bytes.Contains(out.Bytes(), []byte(serviceName+".service")), nil
 }
 
@@ -95,7 +89,6 @@ func displayServiceStatus(serviceName string) error {
 
 	err := cmd.Run()
 
-	// Servis durumu ne olursa olsun çıktıyı göster
 	if out.Len() > 0 {
 		fmt.Println(out.String())
 	}
@@ -103,15 +96,11 @@ func displayServiceStatus(serviceName string) error {
 		fmt.Println("Stderr:", stderr.String())
 	}
 
-	// Hata kontrolü
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
-			// *exec.ExitError türündeyse, komut çalıştı ancak çıkış kodu sıfır değil
-			// Bu durumda, hizmetin durumu hakkında bilgi aldık, uyarı göstermemize gerek yok
 			return nil
 		} else {
-			// Diğer türde hatalar için uyarı göster
 			printWarning(fmt.Sprintf("Failed to get status for %s service.", serviceName))
 			return err
 		}

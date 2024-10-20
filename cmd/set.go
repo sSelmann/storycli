@@ -292,7 +292,6 @@ func init() {
 	setCmd.AddCommand(setInstrumentationNamespaceCmd)
 }
 
-// Örnek: setPruningModeCmd
 var setPruningModeCmd = &cobra.Command{
 	Use:   "pruning-mode [value]",
 	Short: "Set the pruning mode value in story.toml",
@@ -334,8 +333,6 @@ func runSetPruningMode(cmd *cobra.Command, args []string) error {
 	printInfo(fmt.Sprintf("pruning-mode set to: %s", newValue))
 	return nil
 }
-
-// Diğer set komutları için benzer yapılar aşağıda verilmiştir.
 
 // setSnapshotIntervalCmd sets the snapshot_interval in story.toml
 var setSnapshotIntervalCmd = &cobra.Command{
@@ -1104,7 +1101,6 @@ func runSetRPCMaxOpenConnections(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Update nested [rpc] section
 	config.RPC.GRPCMaxOpenConnections = newValue
 
 	if err := saveSetConfigConfig(config); err != nil {
@@ -3022,7 +3018,6 @@ func runSetTxIndexIndexer(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// setTxIndexPSQLConnCmd sets the tx_index.psql-conn in config.toml
 var setTxIndexPSQLConnCmd = &cobra.Command{
 	Use:   "tx-index-psql-conn [value]",
 	Short: "Set the tx_index.psql-conn value in config.toml",
@@ -3052,7 +3047,6 @@ func runSetTxIndexPSQLConn(cmd *cobra.Command, args []string) error {
 // [instrumentation] section set commands
 // ----------------------- //
 
-// setInstrumentationPrometheusCmd sets the instrumentation.prometheus in config.toml
 var setInstrumentationPrometheusCmd = &cobra.Command{
 	Use:   "instrumentation-prometheus [value]",
 	Short: "Set the instrumentation.prometheus value in config.toml",
