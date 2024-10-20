@@ -3,7 +3,7 @@
 set -e
 
 # Determine the latest version or specify a version
-VERSION="v0.1.0"
+VERSION="v0.1.1"
 
 # Determine the OS and ARCH
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
