@@ -30,25 +30,8 @@ import (
 var (
 	moniker          string
 	customPort       string
-	pruningMode      string
 	snapshotProvider string
 )
-
-type Snapshot struct {
-	Name    string `json:"name"`
-	Pruned  bool   `json:"pruned"`
-	Size    string `json:"size"`
-	ChainID string `json:"chainId"`
-}
-
-type SnapshotResponse struct {
-	Snapshots []Snapshot `json:"details"`
-}
-
-type ItrocketSnapshotState struct {
-	SnapshotGethName string `json:"snapshot_geth_name"`
-	SnapshotName     string `json:"snapshot_name"`
-}
 
 var (
 	prunedSnapshotSize  string
@@ -128,11 +111,11 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	// Step 2: Fetch Snapshot Sizes from API (only for Krews)
-	err = fetchSnapshotSizes()
-	if err != nil {
-		printWarning(fmt.Sprintf("Failed to fetch snapshot sizes: %v", err))
-		// Continue without snapshot size info
-	}
+	//err = fetchSnapshotSizes()
+	//if err != nil {
+	//	printWarning(fmt.Sprintf("Failed to fetch snapshot sizes: %v", err))
+	//	// Continue without snapshot size info
+	//}
 
 	// Step 3: Prompt for missing flags
 	if moniker == "" {
@@ -240,39 +223,6 @@ func checkSystemResources() error {
 		printWarning(fmt.Sprintf("You have %d GB of disk space. Recommended is %d GB.", diskGB, recommendedDiskGB))
 	} else {
 		printInfo(fmt.Sprintf("Disk space: %d GB", diskGB))
-	}
-
-	return nil
-}
-
-func fetchSnapshotSizes() error {
-	printInfo("Fetching snapshot sizes from Krews...")
-	resp, err := http.Get("https://snapshots-api.krews.xyz/api/snapshots/story")
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	var snapshotResp SnapshotResponse
-	err = json.NewDecoder(resp.Body).Decode(&snapshotResp)
-	if err != nil {
-		return err
-	}
-
-	for _, snapshot := range snapshotResp.Snapshots {
-		if snapshot.Pruned {
-			prunedSnapshotSize = snapshot.Size
-		} else {
-			archiveSnapshotSize = snapshot.Size
-		}
-	}
-
-	// If sizes are empty, set default messages
-	if prunedSnapshotSize == "" {
-		prunedSnapshotSize = "unknown"
-	}
-	if archiveSnapshotSize == "" {
-		archiveSnapshotSize = "unknown"
 	}
 
 	return nil
@@ -512,49 +462,6 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	return nil
 }
 
-func downloadSnapshotKrews(homeDir, pruningMode string) error {
-	// Existing Krews snapshot process
-	snapshotName := fmt.Sprintf("story_testnet_%s_snapshot", pruningMode)
-	snapshotURL := fmt.Sprintf("krews-snapshot:krews-1-eu/%s", snapshotName)
-	destDir := fmt.Sprintf("%s/.story/", homeDir)
-
-	// Install and configure Rclone specifically for Krews
-	printInfo("Installing and configuring Rclone for Krews snapshot...")
-	err := installAndConfigureRcloneKrews(homeDir)
-	if err != nil {
-		return err
-	}
-
-	// Backup priv_validator_state.json
-	printInfo("Backup priv_validator_state.json...")
-	err = runCommand(fmt.Sprintf("cp %s/.story/story/data/priv_validator_state.json %s/.story/story/priv_validator_state.json.backup ", homeDir, homeDir))
-	if err != nil {
-		return err
-	}
-
-	// Run rclone with --progress, output visible
-	cmd := exec.Command("rclone", "copy", "--no-check-certificate", "--transfers=6", "--checkers=6", snapshotURL, destDir, "--progress")
-
-	// Connect rclone's stdout and stderr to the program's stdout and stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// Restore priv_validator_state.json
-	printInfo("Restoring priv_validator_state.json...")
-	err = runCommand(fmt.Sprintf("mv %s/.story/story/priv_validator_state.json.backup %s/.story/story/data/priv_validator_state.json", homeDir, homeDir))
-	if err != nil {
-		return err
-	}
-
-	printSuccess("Snapshot successfully downloaded from Krews.")
-	return nil
-}
-
 func installAndConfigureRcloneKrews(homeDir string) error {
 	// Check if Rclone is installed
 	_, err := exec.LookPath("rclone")
@@ -589,129 +496,6 @@ endpoint = https://fra1.cdn.digitaloceanspaces.com
 		return err
 	}
 
-	return nil
-}
-
-func downloadSnapshotItrocket(homeDir, pruningMode string) error {
-	// Itrocket snapshot process
-	var apiURL string
-	var serverId string
-	if strings.ToLower(pruningMode) == "pruned" {
-		apiURL = "https://server-1.itrocket.net/testnet/story/.current_state.json"
-		serverId = "1"
-	} else if strings.ToLower(pruningMode) == "archive" {
-		apiURL = "https://server-8.itrocket.net/testnet/story/.current_state.json"
-		serverId = "8"
-	} else {
-		return errors.New("invalid pruning mode")
-	}
-
-	// Fetch snapshot names from API
-	printInfo("Fetching snapshot names from Itrocket...")
-	resp, err := http.Get(apiURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	var snapshotState ItrocketSnapshotState
-	err = json.NewDecoder(resp.Body).Decode(&snapshotState)
-	if err != nil {
-		return err
-	}
-
-	if snapshotState.SnapshotGethName == "" || snapshotState.SnapshotName == "" {
-		return errors.New("failed to fetch snapshot names from Itrocket")
-	}
-
-	// Install required packages
-	printInfo("Installing required packages for Itrocket snapshot...")
-	err = runCommand("sudo apt install curl tmux jq lz4 unzip -y")
-	if err != nil {
-		return err
-	}
-
-	// Stop node services
-	printInfo("Stopping Story and Story-Geth services...")
-	err = runCommand("sudo systemctl stop story story-geth")
-	if err != nil {
-		return err
-	}
-
-	// Backup priv_validator_state.json
-	printInfo("Backup priv_validator_state.json...")
-	err = runCommand(fmt.Sprintf("cp %s/.story/story/data/priv_validator_state.json %s/.story/story/priv_validator_state.json.backup ", homeDir, homeDir))
-	if err != nil {
-		return err
-	}
-
-	// Remove old data and unpack Story snapshot
-	printInfo("Removing old Story data...")
-	snapshotName := snapshotState.SnapshotName
-	storySnapshotURL := fmt.Sprintf("https://server-%s.itrocket.net/testnet/story/%s", serverId, snapshotName)
-	storySnapshotPath := filepath.Join(homeDir, ".story", "story_snapshot.tar.lz4")
-
-	// Download Story snapshot with progress bar
-	printInfo("Downloading Story snapshot...")
-	err = downloadFileWithProgress(storySnapshotURL, storySnapshotPath)
-	if err != nil {
-		return err
-	}
-
-	// Decompress and extract Story snapshot
-	printInfo("Extracting Story snapshot...")
-	err = decompressAndExtractLz4Tar(storySnapshotPath, filepath.Join(homeDir, ".story", "story"))
-	if err != nil {
-		return err
-	}
-
-	// Remove the downloaded snapshot file after extraction
-	err = os.Remove(storySnapshotPath)
-	if err != nil {
-		return err
-	}
-
-	// Delete geth data and unpack Geth snapshot
-	printInfo("Removing old Geth data and downloading new Geth snapshot...")
-	snapshotGethName := snapshotState.SnapshotGethName
-	gethSnapshotURL := fmt.Sprintf("https://server-%s.itrocket.net/testnet/story/%s", serverId, snapshotGethName)
-	gethSnapshotPath := filepath.Join(homeDir, ".story", "geth_snapshot.tar.lz4")
-
-	// Download Geth snapshot with progress bar
-	printInfo("Downloading Geth snapshot...")
-	err = downloadFileWithProgress(gethSnapshotURL, gethSnapshotPath)
-	if err != nil {
-		return err
-	}
-
-	// Decompress and extract Geth snapshot
-	printInfo("extracting Geth snapshot...")
-	err = decompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "iliad", "geth"))
-	if err != nil {
-		return err
-	}
-
-	// Restore priv_validator_state.json
-	printInfo("Restoring priv_validator_state.json...")
-	err = runCommand(fmt.Sprintf("mv %s/.story/story/priv_validator_state.json.backup %s/.story/story/data/priv_validator_state.json", homeDir, homeDir))
-	if err != nil {
-		return err
-	}
-
-	// Remove the downloaded snapshot file after extraction
-	err = os.Remove(gethSnapshotPath)
-	if err != nil {
-		return err
-	}
-
-	// Start services
-	printInfo("Starting Story and Story-Geth services...")
-	err = runCommand("sudo systemctl restart story story-geth")
-	if err != nil {
-		return err
-	}
-
-	printSuccess("Snapshot successfully downloaded and applied from Itrocket.")
 	return nil
 }
 
@@ -924,27 +708,25 @@ WantedBy=multi-user.target
 	return nil
 }
 
-func runCommand(command string) error {
-	cmd := exec.Command("bash", "-c", command)
+func runCommand(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	// Include environment variables
 	cmd.Env = os.Environ()
 
-	err := cmd.Run()
-	if err != nil {
-		// Only show outputs on error
-		fmt.Printf("\n✖ Error executing command: %s\n", command)
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("\n✖ Error executing command: %s %v\n", name, args)
 		fmt.Println("Error:", err)
 		fmt.Println("Stdout:", stdout.String())
 		fmt.Println("Stderr:", stderr.String())
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func replaceInFile(filePath, old, new string) error {

@@ -1,8 +1,7 @@
+// cmd/restart.go
 package cmd
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"os/exec"
 
@@ -20,74 +19,40 @@ func init() {
 }
 
 func runRestart(cmd *cobra.Command, args []string) error {
-	printInfo("Checking Story and Geth services exist...")
+	printInfo("Restarting services...")
 
-	storyExists, err := checkServiceExists("story")
-	if err != nil {
-		return err
-	}
-
-	gethExists, err := checkServiceExists("story-geth")
-	if err != nil {
-		return err
-	}
-
-	if !storyExists && !gethExists {
-		printWarning("Neither 'story' nor 'story-geth' services are installed.")
-		return nil
-	}
-
-	if storyExists {
-		printInfo("Restarting story service...")
-		err = displayRestart("story")
-		if err != nil {
-
-		}
-	} else {
-		printWarning("'story' service is not installed.")
-	}
-
-	if gethExists {
-		printInfo("Restarting story-geth service...")
-		err = displayRestart("story-geth")
-		if err != nil {
-		}
-	} else {
-		printWarning("'story-geth' service is not installed.")
-	}
-
-	printSuccess("Story and Geth services successfully restarted")
-	return nil
-}
-
-func displayRestart(serviceName string) error {
-	cmdStr := fmt.Sprintf("systemctl restart %s", serviceName)
-	cmd := exec.Command("bash", "-c", cmdStr)
-
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
-	if out.Len() > 0 {
-		fmt.Println(out.String())
-	}
-	if stderr.Len() > 0 {
-		fmt.Println("Stderr:", stderr.String())
-	}
-
-	// Hata kontrolü
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			return nil
-		} else {
-			printWarning(fmt.Sprintf("Failed to get status for %s service.", serviceName))
+	services := []string{"story", "story-geth"}
+	for _, service := range services {
+		if err := performServiceAction(service, restartService); err != nil {
 			return err
 		}
 	}
 
+	printSuccess("Services successfully restarted.")
+	return nil
+}
+
+func restartService(serviceName string) error {
+	cmd := exec.Command("systemctl", "restart", serviceName)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		printError(fmt.Sprintf("Failed to restart '%s' service: %v\nOutput: %s", serviceName, err, string(output)))
+		return err
+	}
+	return nil
+}
+
+func performServiceAction(serviceName string, action func(string) error) error {
+	exists, err := checkServiceExists(serviceName)
+	if err != nil {
+		return fmt.Errorf("failed to check if service '%s' exists: %w", serviceName, err)
+	}
+	if !exists {
+		printWarning(fmt.Sprintf("'%s' service is not installed.", serviceName))
+		return nil
+	}
+	printInfo(fmt.Sprintf("Performing action on '%s' service...", serviceName))
+	if err := action(serviceName); err != nil {
+		return err
+	}
 	return nil
 }
