@@ -10,6 +10,7 @@ type ItrocketEndpoints struct {
 type Endpoints struct {
 	Itrocket ItrocketEndpoints
 	Krews    string
+	Jnode    string // Yeni Jnode alanı ekleniyor
 }
 
 // DefaultEndpoints returns the default API endpoints.
@@ -26,5 +27,6 @@ func DefaultEndpoints() Endpoints {
 			},
 		},
 		Krews: "https://snapshots-api.krews.xyz/api/snapshots/story",
+		Jnode: "https://snapshot-external-providers-api.krews.xyz/snapshots/jnode", // Jnode API URL'si ekleniyor
 	}
 }
