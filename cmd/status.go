@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +21,7 @@ func init() {
 }
 
 func runStatus(cmd *cobra.Command, args []string) error {
-	printInfo("Checking service statuses...")
+	pterm.Info.Printf("Checking service statuses...")
 
 	services := []string{"story", "story-geth"}
 	for _, service := range services {
@@ -39,7 +40,7 @@ func displayServiceStatus(serviceName string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		printWarning(fmt.Sprintf("Failed to get status for '%s' service.", serviceName))
+		pterm.Warning.Printf(fmt.Sprintf("Failed to get status for '%s' service.", serviceName))
 		return err
 	}
 

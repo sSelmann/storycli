@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +43,7 @@ func init() {
 
 func runServiceLogs(serviceName string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		printInfo(fmt.Sprintf("Checking if '%s' service exists...", serviceName))
+		pterm.Info.Printf(fmt.Sprintf("Checking if '%s' service exists...", serviceName))
 
 		exists, err := checkServiceExists(serviceName)
 		if err != nil {
@@ -50,11 +51,11 @@ func runServiceLogs(serviceName string) func(cmd *cobra.Command, args []string) 
 		}
 
 		if !exists {
-			printWarning(fmt.Sprintf("'%s' service is not found.", serviceName))
+			pterm.Warning.Printf(fmt.Sprintf("'%s' service is not found.", serviceName))
 			return nil
 		}
 
-		printInfo(fmt.Sprintf("Fetching logs for '%s' service...", serviceName))
+		pterm.Info.Printf(fmt.Sprintf("Fetching logs for '%s' service...", serviceName))
 		if err := displayServiceLogs(serviceName, logsLines); err != nil {
 			return fmt.Errorf("failed to display logs: %w", err)
 		}
@@ -71,7 +72,7 @@ func displayServiceLogs(serviceName string, lines int) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		printWarning(fmt.Sprintf("Failed to fetch logs for '%s' service.", serviceName))
+		pterm.Warning.Printf(fmt.Sprintf("Failed to fetch logs for '%s' service.", serviceName))
 		return err
 	}
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -330,7 +331,7 @@ func runSetPruningMode(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("pruning-mode set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("pruning-mode set to: %s", newValue))
 	return nil
 }
 
@@ -360,7 +361,7 @@ func runSetSnapshotInterval(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("snapshot-interval set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("snapshot-interval set to: %d", newValue))
 	return nil
 }
 
@@ -390,7 +391,7 @@ func runSetSnapshotKeepRecent(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("snapshot-keep-recent set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("snapshot-keep-recent set to: %d", newValue))
 	return nil
 }
 
@@ -420,7 +421,7 @@ func runSetMinRetainBlocks(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("min-retain-blocks set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("min-retain-blocks set to: %d", newValue))
 	return nil
 }
 
@@ -446,7 +447,7 @@ func runSetAppDBBackend(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("app-db-backend set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("app-db-backend set to: %s", newValue))
 	return nil
 }
 
@@ -472,7 +473,7 @@ func runSetEVMBuildDelay(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("evm-build-delay set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("evm-build-delay set to: %s", newValue))
 	return nil
 }
 
@@ -502,7 +503,7 @@ func runSetEVMBuildOptimistic(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("evm-build-optimistic set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("evm-build-optimistic set to: %t", newValue))
 	return nil
 }
 
@@ -532,7 +533,7 @@ func runSetAPIEnable(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("api-enable set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("api-enable set to: %t", newValue))
 	return nil
 }
 
@@ -558,7 +559,7 @@ func runSetAPIAddress(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("api-address set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("api-address set to: %s", newValue))
 	return nil
 }
 
@@ -588,7 +589,7 @@ func runSetEnabledUnsafeCORS(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("enabled-unsafe-cors set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("enabled-unsafe-cors set to: %t", newValue))
 	return nil
 }
 
@@ -628,7 +629,7 @@ func runSetLogLevel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("log-level set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("log-level set to: %s", newValue))
 	return nil
 }
 
@@ -668,7 +669,7 @@ func runSetLogFormat(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("log-format set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("log-format set to: %s", newValue))
 	return nil
 }
 
@@ -698,7 +699,7 @@ func runSetConfigVersion(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("config-version set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("config-version set to: %s", newValue))
 	return nil
 }
 
@@ -727,7 +728,7 @@ func runSetProxyApp(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("proxy_app set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("proxy_app set to: %s", newValue))
 	return nil
 }
 
@@ -753,7 +754,7 @@ func runSetMoniker(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("moniker set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("moniker set to: %s", newValue))
 	return nil
 }
 
@@ -779,7 +780,7 @@ func runSetDBBackend(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("db_backend set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("db_backend set to: %s", newValue))
 	return nil
 }
 
@@ -805,7 +806,7 @@ func runSetDBDir(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("db_dir set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("db_dir set to: %s", newValue))
 	return nil
 }
 
@@ -831,7 +832,7 @@ func runSetLogLevelConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("log_level set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("log_level set to: %s", newValue))
 	return nil
 }
 
@@ -857,7 +858,7 @@ func runSetLogFormatConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("log_format set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("log_format set to: %s", newValue))
 	return nil
 }
 
@@ -883,7 +884,7 @@ func runSetGenesisFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("genesis_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("genesis_file set to: %s", newValue))
 	return nil
 }
 
@@ -909,7 +910,7 @@ func runSetPrivValidatorKeyFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("priv_validator_key_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("priv_validator_key_file set to: %s", newValue))
 	return nil
 }
 
@@ -935,7 +936,7 @@ func runSetPrivValidatorStateFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("priv_validator_state_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("priv_validator_state_file set to: %s", newValue))
 	return nil
 }
 
@@ -961,7 +962,7 @@ func runSetNodeKeyFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("node_key_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("node_key_file set to: %s", newValue))
 	return nil
 }
 
@@ -987,7 +988,7 @@ func runSetABCI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("abci set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("abci set to: %s", newValue))
 	return nil
 }
 
@@ -1017,7 +1018,7 @@ func runSetFilterPeers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("filter_peers set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("filter_peers set to: %t", newValue))
 	return nil
 }
 
@@ -1048,7 +1049,7 @@ func runSetRPCLaddr(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.laddr set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.laddr set to: %s", newValue))
 	return nil
 }
 
@@ -1077,7 +1078,7 @@ func runSetRPCGRPCLaddr(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.grpc_laddr set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.grpc_laddr set to: %s", newValue))
 	return nil
 }
 
@@ -1107,7 +1108,7 @@ func runSetRPCMaxOpenConnections(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.grpc_max_open_connections set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.grpc_max_open_connections set to: %d", newValue))
 	return nil
 }
 
@@ -1138,7 +1139,7 @@ func runSetRPCUnsafe(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.unsafe set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.unsafe set to: %t", newValue))
 	return nil
 }
 
@@ -1169,7 +1170,7 @@ func runSetRPCMaxSubscriptionClients(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.max_subscription_clients set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.max_subscription_clients set to: %d", newValue))
 	return nil
 }
 
@@ -1200,7 +1201,7 @@ func runSetRPCMaxSubscriptionsPerClient(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.max_subscriptions_per_client set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.max_subscriptions_per_client set to: %d", newValue))
 	return nil
 }
 
@@ -1231,7 +1232,7 @@ func runSetRPCExperimentalSubscriptionBufferSize(cmd *cobra.Command, args []stri
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.experimental_subscription_buffer_size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.experimental_subscription_buffer_size set to: %d", newValue))
 	return nil
 }
 
@@ -1262,7 +1263,7 @@ func runSetRPCExperimentalWebsocketWriteBufferSize(cmd *cobra.Command, args []st
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.experimental_websocket_write_buffer_size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.experimental_websocket_write_buffer_size set to: %d", newValue))
 	return nil
 }
 
@@ -1293,7 +1294,7 @@ func runSetRPCExperimentalCloseOnSlowClient(cmd *cobra.Command, args []string) e
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.experimental_close_on_slow_client set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.experimental_close_on_slow_client set to: %t", newValue))
 	return nil
 }
 
@@ -1320,7 +1321,7 @@ func runSetRPCTimeoutBroadcastTxCommit(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.timeout_broadcast_tx_commit set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.timeout_broadcast_tx_commit set to: %s", newValue))
 	return nil
 }
 
@@ -1351,7 +1352,7 @@ func runSetRPCMaxRequestBatchSize(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.max_request_batch_size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.max_request_batch_size set to: %d", newValue))
 	return nil
 }
 
@@ -1382,7 +1383,7 @@ func runSetRPCMaxBodyBytes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.max_body_bytes set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.max_body_bytes set to: %d", newValue))
 	return nil
 }
 
@@ -1413,7 +1414,7 @@ func runSetRPCMaxHeaderBytes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.max_header_bytes set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.max_header_bytes set to: %d", newValue))
 	return nil
 }
 
@@ -1440,7 +1441,7 @@ func runSetRPCPPROFLaddr(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("rpc.pprof_laddr set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("rpc.pprof_laddr set to: %s", newValue))
 	return nil
 }
 
@@ -1471,7 +1472,7 @@ func runSetP2PLaddr(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.laddr set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.laddr set to: %s", newValue))
 	return nil
 }
 
@@ -1498,7 +1499,7 @@ func runSetP2PExternalAddress(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.external_address set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.external_address set to: %s", newValue))
 	return nil
 }
 
@@ -1525,7 +1526,7 @@ func runSetP2PSeeds(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.seeds set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.seeds set to: %s", newValue))
 	return nil
 }
 
@@ -1552,7 +1553,7 @@ func runSetP2PPersistentPeers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.persistent_peers set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.persistent_peers set to: %s", newValue))
 	return nil
 }
 
@@ -1579,7 +1580,7 @@ func runSetP2PAddrBookFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.addr_book_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.addr_book_file set to: %s", newValue))
 	return nil
 }
 
@@ -1611,7 +1612,7 @@ func runSetP2PAddrBookStrict(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.addr_book_strict set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.addr_book_strict set to: %t", newValue))
 	return nil
 }
 
@@ -1642,7 +1643,7 @@ func runSetP2PMaxNumInboundPeers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.max_num_inbound_peers set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.max_num_inbound_peers set to: %d", newValue))
 	return nil
 }
 
@@ -1673,7 +1674,7 @@ func runSetP2PMaxNumOutboundPeers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.max_num_outbound_peers set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.max_num_outbound_peers set to: %d", newValue))
 	return nil
 }
 
@@ -1700,7 +1701,7 @@ func runSetP2PUnconditionalPeerIDs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.unconditional_peer_ids set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.unconditional_peer_ids set to: %s", newValue))
 	return nil
 }
 
@@ -1727,7 +1728,7 @@ func runSetP2PPersistentPeersMaxDialPeriod(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.persistent_peers_max_dial_period set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.persistent_peers_max_dial_period set to: %s", newValue))
 	return nil
 }
 
@@ -1754,7 +1755,7 @@ func runSetP2PFlushThrottleTimeout(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.flush_throttle_timeout set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.flush_throttle_timeout set to: %s", newValue))
 	return nil
 }
 
@@ -1785,7 +1786,7 @@ func runSetP2PMaxPacketMsgPayloadSize(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.max_packet_msg_payload_size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.max_packet_msg_payload_size set to: %d", newValue))
 	return nil
 }
 
@@ -1816,7 +1817,7 @@ func runSetP2PSendRate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.send_rate set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.send_rate set to: %d", newValue))
 	return nil
 }
 
@@ -1847,7 +1848,7 @@ func runSetP2PRecvRate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.recv_rate set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.recv_rate set to: %d", newValue))
 	return nil
 }
 
@@ -1878,7 +1879,7 @@ func runSetP2PPEX(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.pex set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.pex set to: %t", newValue))
 	return nil
 }
 
@@ -1909,7 +1910,7 @@ func runSetP2PSeedMode(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.seed_mode set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.seed_mode set to: %t", newValue))
 	return nil
 }
 
@@ -1940,7 +1941,7 @@ func runSetP2PAllowDuplicateIP(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.allow_duplicate_ip set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.allow_duplicate_ip set to: %t", newValue))
 	return nil
 }
 
@@ -1967,7 +1968,7 @@ func runSetP2PHandshakeTimeout(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.handshake_timeout set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.handshake_timeout set to: %s", newValue))
 	return nil
 }
 
@@ -1994,7 +1995,7 @@ func runSetP2PDialTimeout(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("p2p.dial_timeout set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("p2p.dial_timeout set to: %s", newValue))
 	return nil
 }
 
@@ -2024,7 +2025,7 @@ func runSetMempoolType(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.type set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.type set to: %s", newValue))
 	return nil
 }
 
@@ -2054,7 +2055,7 @@ func runSetMempoolRecheck(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.recheck set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.recheck set to: %t", newValue))
 	return nil
 }
 
@@ -2080,7 +2081,7 @@ func runSetMempoolRecheckTimeout(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.recheck_timeout set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.recheck_timeout set to: %s", newValue))
 	return nil
 }
 
@@ -2110,7 +2111,7 @@ func runSetMempoolBroadcast(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.broadcast set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.broadcast set to: %t", newValue))
 	return nil
 }
 
@@ -2140,7 +2141,7 @@ func runSetMempoolSize(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.size set to: %d", newValue))
 	return nil
 }
 
@@ -2170,7 +2171,7 @@ func runSetMempoolMaxTxsBytes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.max_txs_bytes set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.max_txs_bytes set to: %d", newValue))
 	return nil
 }
 
@@ -2200,7 +2201,7 @@ func runSetMempoolCacheSize(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.cache_size set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.cache_size set to: %d", newValue))
 	return nil
 }
 
@@ -2230,7 +2231,7 @@ func runSetMempoolKeepInvalidTxsInCache(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.keep_invalid_txs_in_cache set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.keep_invalid_txs_in_cache set to: %t", newValue))
 	return nil
 }
 
@@ -2260,7 +2261,7 @@ func runSetMempoolMaxTxBytes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.max_tx_bytes set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.max_tx_bytes set to: %d", newValue))
 	return nil
 }
 
@@ -2290,7 +2291,7 @@ func runSetMempoolMaxBatchBytes(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("mempool.max_batch_bytes set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("mempool.max_batch_bytes set to: %d", newValue))
 	return nil
 }
 
@@ -2324,7 +2325,7 @@ func runSetStatesyncEnable(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.enable set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.enable set to: %t", newValue))
 	return nil
 }
 
@@ -2350,7 +2351,7 @@ func runSetStatesyncRPCServers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.rpc_servers set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.rpc_servers set to: %s", newValue))
 	return nil
 }
 
@@ -2380,7 +2381,7 @@ func runSetStatesyncTrustHeight(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.trust_height set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.trust_height set to: %d", newValue))
 	return nil
 }
 
@@ -2406,7 +2407,7 @@ func runSetStatesyncTrustHash(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.trust_hash set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.trust_hash set to: %s", newValue))
 	return nil
 }
 
@@ -2432,7 +2433,7 @@ func runSetStatesyncTrustPeriod(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.trust_period set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.trust_period set to: %s", newValue))
 	return nil
 }
 
@@ -2458,7 +2459,7 @@ func runSetStatesyncDiscoveryTime(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.discovery_time set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.discovery_time set to: %s", newValue))
 	return nil
 }
 
@@ -2484,7 +2485,7 @@ func runSetStatesyncTempDir(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.temp_dir set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.temp_dir set to: %s", newValue))
 	return nil
 }
 
@@ -2510,7 +2511,7 @@ func runSetStatesyncChunkRequestTimeout(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.chunk_request_timeout set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.chunk_request_timeout set to: %s", newValue))
 	return nil
 }
 
@@ -2540,7 +2541,7 @@ func runSetStatesyncChunkFetchers(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("statesync.chunk_fetchers set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("statesync.chunk_fetchers set to: %d", newValue))
 	return nil
 }
 
@@ -2570,7 +2571,7 @@ func runSetBlocksyncVersion(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("blocksync.version set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("blocksync.version set to: %s", newValue))
 	return nil
 }
 
@@ -2600,7 +2601,7 @@ func runSetConsensusWALFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.wal_file set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.wal_file set to: %s", newValue))
 	return nil
 }
 
@@ -2626,7 +2627,7 @@ func runSetConsensusTimeoutPropose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_propose set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_propose set to: %s", newValue))
 	return nil
 }
 
@@ -2652,7 +2653,7 @@ func runSetConsensusTimeoutProposeDelta(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_propose_delta set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_propose_delta set to: %s", newValue))
 	return nil
 }
 
@@ -2678,7 +2679,7 @@ func runSetConsensusTimeoutPrevote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_prevote set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_prevote set to: %s", newValue))
 	return nil
 }
 
@@ -2704,7 +2705,7 @@ func runSetConsensusTimeoutPrevoteDelta(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_prevote_delta set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_prevote_delta set to: %s", newValue))
 	return nil
 }
 
@@ -2730,7 +2731,7 @@ func runSetConsensusTimeoutPrecommit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_precommit set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_precommit set to: %s", newValue))
 	return nil
 }
 
@@ -2756,7 +2757,7 @@ func runSetConsensusTimeoutPrecommitDelta(cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_precommit_delta set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_precommit_delta set to: %s", newValue))
 	return nil
 }
 
@@ -2782,7 +2783,7 @@ func runSetConsensusTimeoutCommit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.timeout_commit set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.timeout_commit set to: %s", newValue))
 	return nil
 }
 
@@ -2812,7 +2813,7 @@ func runSetConsensusDoubleSignCheckHeight(cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.double_sign_check_height set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.double_sign_check_height set to: %d", newValue))
 	return nil
 }
 
@@ -2842,7 +2843,7 @@ func runSetConsensusSkipTimeoutCommit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.skip_timeout_commit set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.skip_timeout_commit set to: %t", newValue))
 	return nil
 }
 
@@ -2872,7 +2873,7 @@ func runSetConsensusCreateEmptyBlocks(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.create_empty_blocks set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.create_empty_blocks set to: %t", newValue))
 	return nil
 }
 
@@ -2898,7 +2899,7 @@ func runSetConsensusCreateEmptyBlocksInterval(cmd *cobra.Command, args []string)
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.create_empty_blocks_interval set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.create_empty_blocks_interval set to: %s", newValue))
 	return nil
 }
 
@@ -2924,7 +2925,7 @@ func runSetConsensusPeerGossipSleepDuration(cmd *cobra.Command, args []string) e
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.peer_gossip_sleep_duration set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.peer_gossip_sleep_duration set to: %s", newValue))
 	return nil
 }
 
@@ -2950,7 +2951,7 @@ func runSetConsensusPeerQueryMaj23SleepDuration(cmd *cobra.Command, args []strin
 		return err
 	}
 
-	printInfo(fmt.Sprintf("consensus.peer_query_maj23_sleep_duration set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("consensus.peer_query_maj23_sleep_duration set to: %s", newValue))
 	return nil
 }
 
@@ -2984,7 +2985,7 @@ func runSetStorageDiscardABCIResponses(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	printInfo(fmt.Sprintf("storage.discard_abci_responses set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("storage.discard_abci_responses set to: %t", newValue))
 	return nil
 }
 
@@ -3014,7 +3015,7 @@ func runSetTxIndexIndexer(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("tx_index.indexer set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("tx_index.indexer set to: %s", newValue))
 	return nil
 }
 
@@ -3039,7 +3040,7 @@ func runSetTxIndexPSQLConn(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("tx_index.psql-conn set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("tx_index.psql-conn set to: %s", newValue))
 	return nil
 }
 
@@ -3072,7 +3073,7 @@ func runSetInstrumentationPrometheus(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("instrumentation.prometheus set to: %t", newValue))
+	pterm.Info.Printf(fmt.Sprintf("instrumentation.prometheus set to: %t", newValue))
 	return nil
 }
 
@@ -3098,7 +3099,7 @@ func runSetInstrumentationPrometheusListenAddr(cmd *cobra.Command, args []string
 		return err
 	}
 
-	printInfo(fmt.Sprintf("instrumentation.prometheus_listen_addr set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("instrumentation.prometheus_listen_addr set to: %s", newValue))
 	return nil
 }
 
@@ -3128,7 +3129,7 @@ func runSetInstrumentationMaxOpenConnections(cmd *cobra.Command, args []string) 
 		return err
 	}
 
-	printInfo(fmt.Sprintf("instrumentation.max_open_connections set to: %d", newValue))
+	pterm.Info.Printf(fmt.Sprintf("instrumentation.max_open_connections set to: %d", newValue))
 	return nil
 }
 
@@ -3154,7 +3155,7 @@ func runSetInstrumentationNamespace(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("instrumentation.namespace set to: %s", newValue))
+	pterm.Info.Printf(fmt.Sprintf("instrumentation.namespace set to: %s", newValue))
 	return nil
 }
 
@@ -3292,7 +3293,7 @@ func backupFile(filePath string) error {
 		return err
 	}
 
-	printInfo(fmt.Sprintf("Backup created at: %s", backupPath))
+	pterm.Info.Printf(fmt.Sprintf("Backup created at: %s", backupPath))
 	return nil
 }
 

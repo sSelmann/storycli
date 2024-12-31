@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ func init() {
 }
 
 func runStop(cmd *cobra.Command, args []string) error {
-	printInfo("Stopping services...")
+	pterm.Info.Printf("Stopping services...")
 
 	services := []string{"story", "story-geth"}
 	for _, service := range services {
@@ -28,7 +29,7 @@ func runStop(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	printSuccess("Services successfully stopped.")
+	pterm.Success.Printf("Services successfully stopped.")
 	return nil
 }
 

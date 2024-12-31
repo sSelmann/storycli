@@ -55,19 +55,6 @@ func init() {
 	setupNodeCmd.Flags().StringVar(&pruningMode, "pruning-mode", "", "Pruning mode to use (pruned or archive)")
 }
 
-// Helper functions for colored messages
-func printInfo(message string) {
-	pterm.Info.Printf("%s\n", message)
-}
-
-func printWarning(message string) {
-	pterm.Warning.Printf("%s\n", message)
-}
-
-func printSuccess(message string) {
-	pterm.Success.Printf("%s\n", message)
-}
-
 func runSetupNode(cmd *cobra.Command, args []string) error {
 	// Step 0: System Resource Check
 	err := checkSystemResources()
@@ -103,9 +90,9 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-			printSuccess("Existing installation removed.")
+			pterm.Success.Printf("Existing installation removed.")
 		} else {
-			printWarning("Setup aborted.")
+			pterm.Warning.Printf("Setup aborted.")
 			return nil
 		}
 	}
@@ -113,7 +100,7 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	// Step 2: Fetch Snapshot Sizes from API (only for Krews)
 	//err = fetchSnapshotSizes()
 	//if err != nil {
-	//	printWarning(fmt.Sprintf("Failed to fetch snapshot sizes: %v", err))
+	//	pterm.Warning.Printf(fmt.Sprintf("Failed to fetch snapshot sizes: %v", err))
 	//	// Continue without snapshot size info
 	//}
 
@@ -155,7 +142,7 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	// Pruning mode info message
-	printInfo("\nPruning Mode Information:")
+	pterm.Info.Printf("\nPruning Mode Information:")
 	fmt.Printf(" - Pruned Mode: Stores only recent blockchain data, reducing disk usage. Snapshot size: %s\n", prunedSnapshotSize)
 	fmt.Printf(" - Archive Mode: Stores the entire blockchain history, requiring more disk space. Snapshot size: %s\n\n", archiveSnapshotSize)
 
@@ -190,14 +177,14 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 }
 
 func checkSystemResources() error {
-	printInfo("Checking system resources...")
+	pterm.Info.Printf("Checking system resources...")
 
 	// CPU cores
 	cpuCores := runtime.NumCPU()
 	if cpuCores < recommendedCPU {
-		printWarning(fmt.Sprintf("You have %d CPU cores. Recommended is %d cores.", cpuCores, recommendedCPU))
+		pterm.Warning.Printf(fmt.Sprintf("You have %d CPU cores. Recommended is %d cores.", cpuCores, recommendedCPU))
 	} else {
-		printInfo(fmt.Sprintf("CPU cores: %d", cpuCores))
+		pterm.Info.Printf(fmt.Sprintf("CPU cores: %d", cpuCores))
 	}
 
 	// RAM
@@ -207,9 +194,9 @@ func checkSystemResources() error {
 	}
 	ramMB := vmStat.Total / (1024 * 1024)
 	if int(ramMB) < recommendedRAM {
-		printWarning(fmt.Sprintf("You have %d MB of RAM. Recommended is %d MB.", ramMB, recommendedRAM))
+		pterm.Warning.Printf(fmt.Sprintf("You have %d MB of RAM. Recommended is %d MB.", ramMB, recommendedRAM))
 	} else {
-		printInfo(fmt.Sprintf("RAM: %d MB", ramMB))
+		pterm.Info.Printf(fmt.Sprintf("RAM: %d MB", ramMB))
 	}
 
 	// Disk space
@@ -220,9 +207,9 @@ func checkSystemResources() error {
 	diskGB := diskStat.Total / (1024 * 1024 * 1024)
 	recommendedDiskGB := recommendedDisk / (1024 * 1024 * 1024)
 	if diskStat.Total < uint64(recommendedDisk) {
-		printWarning(fmt.Sprintf("You have %d GB of disk space. Recommended is %d GB.", diskGB, recommendedDiskGB))
+		pterm.Warning.Printf(fmt.Sprintf("You have %d GB of disk space. Recommended is %d GB.", diskGB, recommendedDiskGB))
 	} else {
-		printInfo(fmt.Sprintf("Disk space: %d GB", diskGB))
+		pterm.Info.Printf(fmt.Sprintf("Disk space: %d GB", diskGB))
 	}
 
 	return nil
@@ -263,28 +250,28 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	os.Setenv("PRUNING_MODE", pruningMode)
 
 	// Navigate to home directory
-	printInfo("Navigating to home directory...")
+	pterm.Info.Printf("Navigating to home directory...")
 	err := runCommand("cd $HOME")
 	if err != nil {
 		return err
 	}
 
 	// Download geth binary
-	printInfo("Downloading geth binary...")
+	pterm.Info.Printf("Downloading geth binary...")
 	err = runCommand("wget -O geth https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
 	if err != nil {
 		return err
 	}
 
 	// Make geth executable
-	printInfo("Setting execute permissions for geth...")
+	pterm.Info.Printf("Setting execute permissions for geth...")
 	err = runCommand("chmod +x geth")
 	if err != nil {
 		return err
 	}
 
 	// Move geth to ~/go/bin/
-	printInfo("Moving geth to ~/go/bin/")
+	pterm.Info.Printf("Moving geth to ~/go/bin/")
 	err = runCommand("rm -rf ~/go/bin/geth")
 	if err != nil {
 		return err
@@ -299,7 +286,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Create necessary directories
-	printInfo("Creating necessary directories...")
+	pterm.Info.Printf("Creating necessary directories...")
 	err = runCommand("[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
 	if err != nil {
 		return err
@@ -310,7 +297,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Install Story
-	printInfo("Cloning Story repository...")
+	pterm.Info.Printf("Cloning Story repository...")
 	err = runCommand("cd $HOME && rm -rf story && git clone https://github.com/piplabs/story")
 	if err != nil {
 		return err
@@ -322,20 +309,20 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 		return err
 	}
 
-	printInfo(fmt.Sprintf("Checking out version %s...", tag))
+	pterm.Info.Printf(fmt.Sprintf("Checking out version %s...", tag))
 	err = runCommand(fmt.Sprintf("cd story && git checkout %s", tag))
 	if err != nil {
 		return err
 	}
 
-	printInfo("Building Story binary...")
+	pterm.Info.Printf("Building Story binary...")
 	err = runCommand("cd story && go build -o story ./client")
 	if err != nil {
 		return err
 	}
 
 	// Move story binary to ~/go/bin/
-	printInfo("Moving story binary to ~/go/bin/")
+	pterm.Info.Printf("Moving story binary to ~/go/bin/")
 	err = runCommand("rm -rf $HOME/go/bin/story")
 	if err != nil {
 		return err
@@ -346,7 +333,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Initialize Story
-	printInfo("Initializing Story node...")
+	pterm.Info.Printf("Initializing Story node...")
 	initCmd := fmt.Sprintf("story init --moniker %s --network iliad", moniker)
 	err = runCommand(initCmd)
 	if err != nil {
@@ -354,21 +341,21 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Configure seeds and peers
-	printInfo("Configuring seeds and peers...")
+	pterm.Info.Printf("Configuring seeds and peers...")
 	err = configureSeedsAndPeersWithoutCosmovisor(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Download genesis and addrbook
-	printInfo("Downloading genesis and addrbook...")
+	pterm.Info.Printf("Downloading genesis and addrbook...")
 	err = downloadGenesisAndAddrbookWithoutCosmovisor(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Set custom ports in story.toml
-	printInfo("Setting custom ports in story.toml...")
+	pterm.Info.Printf("Setting custom ports in story.toml...")
 	storyToml := fmt.Sprintf("%s/.story/story/config/story.toml", homeDir)
 	err = replaceInFile(storyToml, `:1317`, fmt.Sprintf(":%s317", customPort))
 	if err != nil {
@@ -380,7 +367,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Set custom ports in config.toml
-	printInfo("Setting custom ports in config.toml...")
+	pterm.Info.Printf("Setting custom ports in config.toml...")
 	configToml := fmt.Sprintf("%s/.story/story/config/config.toml", homeDir)
 	publicIP, err := getPublicIP()
 	if err != nil {
@@ -409,7 +396,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Enable Prometheus
-	printInfo("Enabling Prometheus...")
+	pterm.Info.Printf("Enabling Prometheus...")
 	err = replaceInFile(configToml, "prometheus = false", "prometheus = true")
 	if err != nil {
 		return err
@@ -424,14 +411,14 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Create systemd service files
-	printInfo("Creating systemd service files...")
+	pterm.Info.Printf("Creating systemd service files...")
 	err = createServiceFilesWithoutCosmovisor(homeDir, customPort)
 	if err != nil {
 		return err
 	}
 
 	// Download snapshot based on provider
-	printInfo("Downloading snapshot...")
+	pterm.Info.Printf("Downloading snapshot...")
 	if strings.ToLower(snapshotProvider) == "krews" {
 		err = downloadSnapshotKrews(homeDir, pruningMode)
 	} else if strings.ToLower(snapshotProvider) == "itrocket" {
@@ -444,7 +431,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	// Enable and start services
-	printInfo("Enabling and starting services...")
+	pterm.Info.Printf("Enabling and starting services...")
 	err = runCommand("sudo systemctl daemon-reload")
 	if err != nil {
 		return err
@@ -457,7 +444,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	if err != nil {
 		return err
 	}
-	printSuccess("Node setup without Cosmovisor completed successfully.")
+	pterm.Success.Printf("Node setup without Cosmovisor completed successfully.")
 
 	return nil
 }
@@ -466,20 +453,20 @@ func installAndConfigureRcloneKrews(homeDir string) error {
 	// Check if Rclone is installed
 	_, err := exec.LookPath("rclone")
 	if err != nil {
-		printInfo("Rclone not found. Installing Rclone...")
+		pterm.Info.Printf("Rclone not found. Installing Rclone...")
 		// Install Rclone
 		installCmd := "sudo -v ; curl https://rclone.org/install.sh | sudo bash"
 		err = runCommand(installCmd)
 		if err != nil {
 			return err
 		}
-		printSuccess("Rclone Installed")
+		pterm.Success.Printf("Rclone Installed")
 	} else {
-		printInfo("Rclone is Already Installed")
+		pterm.Info.Printf("Rclone is Already Installed")
 	}
 
 	// Configure Rclone for Krews
-	printInfo("Configuring Rclone for Krews...")
+	pterm.Info.Printf("Configuring Rclone for Krews...")
 	rcloneConf := `[krews-snapshot]
 type = s3
 provider = DigitalOcean
@@ -610,7 +597,7 @@ func decompressAndExtractLz4Tar(lz4Path, destDir string) error {
 			}
 		default:
 			// Unsupported type
-			printWarning(fmt.Sprintf("Unsupported file type: %v in %s", header.Typeflag, header.Name))
+			pterm.Warning.Printf(fmt.Sprintf("Unsupported file type: %v in %s", header.Typeflag, header.Name))
 		}
 	}
 

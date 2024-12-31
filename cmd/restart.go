@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ func init() {
 }
 
 func runRestart(cmd *cobra.Command, args []string) error {
-	printInfo("Restarting services...")
+	pterm.Info.Printf("Restarting services...")
 
 	services := []string{"story", "story-geth"}
 	for _, service := range services {
@@ -28,7 +29,7 @@ func runRestart(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	printSuccess("Services successfully restarted.")
+	pterm.Success.Printf("Services successfully restarted.")
 	return nil
 }
 
@@ -47,10 +48,10 @@ func performServiceAction(serviceName string, action func(string) error) error {
 		return fmt.Errorf("failed to check if service '%s' exists: %w", serviceName, err)
 	}
 	if !exists {
-		printWarning(fmt.Sprintf("'%s' service is not installed.", serviceName))
+		pterm.Warning.Printf(fmt.Sprintf("'%s' service is not installed.", serviceName))
 		return nil
 	}
-	printInfo(fmt.Sprintf("Performing action on '%s' service...", serviceName))
+	pterm.Info.Printf(fmt.Sprintf("Performing action on '%s' service...", serviceName))
 	if err := action(serviceName); err != nil {
 		return err
 	}

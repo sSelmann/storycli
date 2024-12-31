@@ -4,6 +4,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,7 @@ var updateCmd = &cobra.Command{
 	Short: "Update story and geth binaries",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Update geth binary
-		printInfo("Updating geth...")
+		pterm.Info.Printf("Updating geth...")
 		err := runCommand("cd $HOME && wget -O geth https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
 		if err != nil {
 			printError("Failed to download geth")
@@ -40,7 +41,7 @@ var updateCmd = &cobra.Command{
 		}
 
 		// Update story binary
-		printInfo("Updating story...")
+		pterm.Info.Printf("Updating story...")
 		err = runCommand("cd $HOME && rm -rf story")
 		if err != nil {
 			printError("Failed to remove old story")
