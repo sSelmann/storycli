@@ -51,7 +51,7 @@ func init() {
 func defaultHomeDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		pterm.Error.Printf(fmt.Sprintf("Failed to get user home directory: %v", err))
+		pterm.Error.Println(fmt.Sprintf("Failed to get user home directory: %v", err))
 		os.Exit(1)
 	}
 	return filepath.Join(home)

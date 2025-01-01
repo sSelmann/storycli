@@ -46,10 +46,10 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 	}
 
 	// 2) Fetch data for all providers, specifically for the chosen pruning mode
-	pterm.Info.Printf(fmt.Sprintf("Fetching snapshot data for providers (mode=%s)...", pruningMode))
+	pterm.Info.Println(fmt.Sprintf("Fetching snapshot data for providers (mode=%s)...", pruningMode))
 	providersData, err := fetchAllProvidersDataForMode(pruningMode) // includes Jnode
 	if err != nil {
-		pterm.Warning.Printf(fmt.Sprintf("Failed to fetch providers data: %v", err))
+		pterm.Warning.Println(fmt.Sprintf("Failed to fetch providers data: %v", err))
 	}
 
 	if len(providersData) == 0 {
@@ -64,7 +64,7 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 
 	// If --output-path is set, download directly and skip extra steps
 	if outputPath != "" {
-		pterm.Info.Printf(fmt.Sprintf("Downloading snapshot from %s in %s mode to %s...", selectedProvider, pruningMode, outputPath))
+		pterm.Info.Println(fmt.Sprintf("Downloading snapshot from %s in %s mode to %s...", selectedProvider, pruningMode, outputPath))
 
 		switch selectedProvider {
 		case "Itrocket":
@@ -86,7 +86,7 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 			return errors.New("provider not supported yet")
 		}
 
-		pterm.Success.Printf(fmt.Sprintf("Snapshot successfully downloaded to %s from %s.", outputPath, selectedProvider))
+		pterm.Success.Println(fmt.Sprintf("Snapshot successfully downloaded to %s from %s.", outputPath, selectedProvider))
 		return nil
 	}
 

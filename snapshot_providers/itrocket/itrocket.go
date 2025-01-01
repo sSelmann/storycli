@@ -50,7 +50,7 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return errors.New("no best server URL found for the selected mode")
 	}
 
-	pterm.Info.Printf(fmt.Sprintf("Fetching snapshot names from Itrocket (%s)...", serverURL))
+	pterm.Info.Println(fmt.Sprintf("Fetching snapshot names from Itrocket (%s)...", serverURL))
 	resp, err := http.Get(serverURL)
 	if err != nil {
 		return err
@@ -150,13 +150,13 @@ func DownloadSnapshotToPathItrocket(mode, path string, endpoint config.ItrocketE
 	storyDestPath := filepath.Join(path, storyFileName)
 	gethDestPath := filepath.Join(path, gethFileName)
 
-	pterm.Info.Printf(fmt.Sprintf("Downloading Itrocket Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
+	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
 	err = file.DownloadFileWithProgress(storySnapshotURL, storyDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Story snapshot: %v", err)
 	}
 
-	pterm.Info.Printf(fmt.Sprintf("Downloading Itrocket Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
+	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
 	err = file.DownloadFileWithProgress(gethSnapshotURL, gethDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Geth snapshot: %v", err)

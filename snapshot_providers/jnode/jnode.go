@@ -118,13 +118,13 @@ func DownloadSnapshotToPathJnode(mode, path string, endpoint string) error {
 	storyDestPath := filepath.Join(path, storyFileName)
 	gethDestPath := filepath.Join(path, gethFileName)
 
-	pterm.Info.Printf(fmt.Sprintf("Downloading Jnode Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
+	pterm.Info.Println(fmt.Sprintf("Downloading Jnode Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
 	err = file.DownloadFileWithProgress(storySnapshotURL, storyDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Jnode Story snapshot: %v", err)
 	}
 
-	pterm.Info.Printf(fmt.Sprintf("Downloading Jnode Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
+	pterm.Info.Println(fmt.Sprintf("Downloading Jnode Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
 	err = file.DownloadFileWithProgress(gethSnapshotURL, gethDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Jnode Geth snapshot: %v", err)
