@@ -32,6 +32,7 @@ var (
 var (
 	prunedSnapshotSize  string
 	archiveSnapshotSize string
+	pruningMode         string
 )
 
 var recommendedCPU = 4

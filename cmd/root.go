@@ -4,6 +4,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/sSelmann/storycli/cmd/snapshot"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,8 @@ func init() {
 	// mark completion hidden
 	completion.Hidden = true
 	rootCmd.AddCommand(completion)
+
+	rootCmd.AddCommand(snapshot.GetSnapshotCmd())
 
 	rootCmd.Flags().BoolP("help", "h", false, "help for storycli")
 }
