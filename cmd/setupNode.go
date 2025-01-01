@@ -154,14 +154,14 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 }
 
 func checkSystemResources() error {
-	pterm.Info.Printf("Checking system resources...")
+	pterm.Info.Println("Checking system resources...")
 
 	// CPU cores
 	cpuCores := runtime.NumCPU()
 	if cpuCores < recommendedCPU {
-		pterm.Warning.Printf(fmt.Sprintf("You have %d CPU cores. Recommended is %d cores.", cpuCores, recommendedCPU))
+		pterm.Warning.Println(fmt.Sprintf("You have %d CPU cores. Recommended is %d cores.", cpuCores, recommendedCPU))
 	} else {
-		pterm.Info.Printf(fmt.Sprintf("CPU cores: %d", cpuCores))
+		pterm.Info.Println(fmt.Sprintf("CPU cores: %d", cpuCores))
 	}
 
 	// RAM
@@ -171,9 +171,9 @@ func checkSystemResources() error {
 	}
 	ramMB := vmStat.Total / (1024 * 1024)
 	if int(ramMB) < recommendedRAM {
-		pterm.Warning.Printf(fmt.Sprintf("You have %d MB of RAM. Recommended is %d MB.", ramMB, recommendedRAM))
+		pterm.Warning.Println(fmt.Sprintf("You have %d MB of RAM. Recommended is %d MB.", ramMB, recommendedRAM))
 	} else {
-		pterm.Info.Printf(fmt.Sprintf("RAM: %d MB", ramMB))
+		pterm.Info.Println(fmt.Sprintf("RAM: %d MB", ramMB))
 	}
 
 	// Disk space
@@ -184,9 +184,9 @@ func checkSystemResources() error {
 	diskGB := diskStat.Total / (1024 * 1024 * 1024)
 	recommendedDiskGB := recommendedDisk / (1024 * 1024 * 1024)
 	if diskStat.Total < uint64(recommendedDisk) {
-		pterm.Warning.Printf(fmt.Sprintf("You have %d GB of disk space. Recommended is %d GB.", diskGB, recommendedDiskGB))
+		pterm.Warning.Println(fmt.Sprintf("You have %d GB of disk space. Recommended is %d GB.", diskGB, recommendedDiskGB))
 	} else {
-		pterm.Info.Printf(fmt.Sprintf("Disk space: %d GB", diskGB))
+		pterm.Info.Println(fmt.Sprintf("Disk space: %d GB", diskGB))
 	}
 
 	return nil
