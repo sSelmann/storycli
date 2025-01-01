@@ -21,7 +21,7 @@ func fetchAllProvidersDataForModes(modes []string) ([]providerSnapshotInfo, erro
 
 	for _, mode := range modes {
 		// ITROCKET
-		totalSizeIt, blockHeightIt, timeAgoIt, err := itrocket.FetchItrocketForMode(mode)
+		totalSizeIt, blockHeightIt, timeAgoIt, err := itrocket.FetchItrocketForMode(mode, endpoints.Itrocket)
 		if err != nil {
 			pterm.Warning.Println("Failed to fetch Itrocket data (mode=%s): %v\n", mode, err)
 			results = append(results, providerSnapshotInfo{
@@ -45,7 +45,7 @@ func fetchAllProvidersDataForModes(modes []string) ([]providerSnapshotInfo, erro
 		kPrunedSize, kArchiveSize,
 			kPrunedBlock, kArchiveBlock,
 			kPrunedTimeAgo, kArchiveTimeAgo,
-			err := krews.FetchSnapshotSizesKrews()
+			err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
 		if err != nil {
 			pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
 			results = append(results, providerSnapshotInfo{
@@ -117,7 +117,7 @@ func fetchAllProvidersDataForMode(mode string) ([]providerSnapshotInfo, error) {
 	var results []providerSnapshotInfo
 
 	// ITROCKET
-	totalSizeIt, blockHeightIt, timeAgoIt, err := itrocket.FetchItrocketForMode(mode)
+	totalSizeIt, blockHeightIt, timeAgoIt, err := itrocket.FetchItrocketForMode(mode, endpoints.Itrocket)
 	if err != nil {
 		pterm.Warning.Println("Failed to fetch Itrocket data (mode=%s): %v\n", mode, err)
 		results = append(results, providerSnapshotInfo{
@@ -141,7 +141,7 @@ func fetchAllProvidersDataForMode(mode string) ([]providerSnapshotInfo, error) {
 	kPrunedSize, kArchiveSize,
 		kPrunedBlock, kArchiveBlock,
 		kPrunedTimeAgo, kArchiveTimeAgo,
-		err := krews.FetchSnapshotSizesKrews()
+		err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
 	if err != nil {
 		pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
 		results = append(results, providerSnapshotInfo{

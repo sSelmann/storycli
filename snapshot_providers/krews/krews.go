@@ -11,10 +11,7 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/sSelmann/storycli/utils/bash"
-	"github.com/sSelmann/storycli/utils/config"
 )
-
-var endpoints config.Endpoints
 
 type SnapshotKrews struct {
 	Name         string      `json:"name"`
@@ -81,13 +78,13 @@ func DownloadSnapshotToPathKrews(mode, path string) error {
 	return nil
 }
 
-func FetchSnapshotSizesKrews() (
+func FetchSnapshotSizesKrews(endpoint string) (
 	prunedSize, archiveSize string,
 	prunedBlockHeight, archiveBlockHeight string,
 	prunedTimeAgo, archiveTimeAgo string,
 	err error,
 ) {
-	resp, err := http.Get(endpoints.Krews)
+	resp, err := http.Get(endpoint)
 	if err != nil {
 		return "", "", "", "", "", "", err
 	}

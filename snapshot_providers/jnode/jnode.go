@@ -8,11 +8,8 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/sSelmann/storycli/utils/bash"
-	"github.com/sSelmann/storycli/utils/config"
 	"github.com/sSelmann/storycli/utils/file"
 )
-
-var endpoints config.Endpoints
 
 // JnodeSnapshotFiles represents the files section in jnode API response
 type JnodeSnapshotFiles struct {
@@ -86,8 +83,8 @@ func FetchSnapshotSizesJnode() (
 }
 
 // DownloadSnapshotToPathJnode downloads the Jnode snapshot to a specified path without applying it
-func DownloadSnapshotToPathJnode(mode, path string) error {
-	apiURL := endpoints.Jnode
+func DownloadSnapshotToPathJnode(mode, path string, endpoint string) error {
+	apiURL := endpoint
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -137,7 +134,7 @@ func DownloadSnapshotToPathJnode(mode, path string) error {
 }
 
 // DownloadSnapshotJnode downloads and applies the Jnode snapshot
-func DownloadSnapshotJnode(homeDir, mode string) error {
+func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 	pterm.Info.Printf("Installing required packages for Jnode snapshot...")
 	if err := bash.RunCommand("sudo apt-get install wget lz4 aria2 pv -y"); err != nil {
 		return err
@@ -162,7 +159,7 @@ func DownloadSnapshotJnode(homeDir, mode string) error {
 	}
 
 	// Fetch snapshot URLs from the Jnode API
-	apiURL := endpoints.Jnode
+	apiURL := endpoint
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return fmt.Errorf("failed to fetch Jnode snapshot data: %v", err)

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/pterm/pterm"
+	"github.com/sSelmann/storycli/utils/config"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,8 @@ var (
 
 	// selectedProvider stores the chosen provider (Itrocket, Krews, Jnode).
 	selectedProvider string
+
+	endpoints = config.DefaultEndpoints()
 )
 
 // snapshotCmd represents the main snapshot command

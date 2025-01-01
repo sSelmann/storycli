@@ -23,8 +23,6 @@ var (
 	// of the best server URLs for Itrocket (pruned vs. archive).
 	bestPrunedServerURL  string
 	bestArchiveServerURL string
-
-	endpoints config.Endpoints
 )
 
 type ItrocketSnapshotState struct {
@@ -129,12 +127,12 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 	return nil
 }
 
-func DownloadSnapshotToPathItrocket(mode, path string) error {
+func DownloadSnapshotToPathItrocket(mode, path string, endpoint config.ItrocketEndpoints) error {
 	var urls []string
 	if mode == "pruned" {
-		urls = endpoints.Itrocket.Pruned
+		urls = endpoint.Pruned
 	} else {
-		urls = endpoints.Itrocket.Archive
+		urls = endpoint.Archive
 	}
 
 	best, err := fetchItrocketBestSnapshot(urls)
@@ -168,12 +166,12 @@ func DownloadSnapshotToPathItrocket(mode, path string) error {
 }
 
 // fetchItrocketForMode fetches Itrocket data based on pruning mode
-func FetchItrocketForMode(mode string) (string, string, string, error) {
+func FetchItrocketForMode(mode string, endpoint config.ItrocketEndpoints) (string, string, string, error) {
 	var urls []string
 	if mode == "pruned" {
-		urls = endpoints.Itrocket.Pruned
+		urls = endpoint.Pruned
 	} else {
-		urls = endpoints.Itrocket.Archive
+		urls = endpoint.Archive
 	}
 
 	best, err := fetchItrocketBestSnapshot(urls)

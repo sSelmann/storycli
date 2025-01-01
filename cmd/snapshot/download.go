@@ -68,7 +68,7 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 
 		switch selectedProvider {
 		case "Itrocket":
-			err = itrocket.DownloadSnapshotToPathItrocket(pruningMode, outputPath)
+			err = itrocket.DownloadSnapshotToPathItrocket(pruningMode, outputPath, endpoints.Itrocket)
 			if err != nil {
 				return fmt.Errorf("failed to download snapshot from Itrocket: %v", err)
 			}
@@ -78,7 +78,7 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("failed to download snapshot from Krews: %v", err)
 			}
 		case "Jnode":
-			err = jnode.DownloadSnapshotToPathJnode(pruningMode, outputPath)
+			err = jnode.DownloadSnapshotToPathJnode(pruningMode, outputPath, endpoints.Jnode)
 			if err != nil {
 				return fmt.Errorf("failed to download snapshot from Jnode: %v", err)
 			}
@@ -107,7 +107,7 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case "Jnode":
-		if err := jnode.DownloadSnapshotJnode(homeDirFlag, pruningMode); err != nil {
+		if err := jnode.DownloadSnapshotJnode(homeDirFlag, pruningMode, endpoints.Jnode); err != nil {
 			return err
 		}
 	default:
