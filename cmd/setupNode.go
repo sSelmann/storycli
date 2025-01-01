@@ -1,30 +1,26 @@
 package cmd
 
 import (
-	"archive/tar"
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/manifoldco/promptui"
-	"github.com/pierrec/lz4/v4"
 	"github.com/pterm/pterm"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v7"
-	"github.com/vbauerster/mpb/v7/decor"
+
+	"github.com/sSelmann/storycli/snapshot_providers/itrocket"
+	"github.com/sSelmann/storycli/snapshot_providers/krews"
+	"github.com/sSelmann/storycli/utils/bash"
 )
 
 var (
@@ -86,7 +82,7 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-			err = runCommand("systemctl stop story story-geth")
+			err = bash.RunCommand("systemctl stop story story-geth")
 			if err != nil {
 				return err
 			}
@@ -251,54 +247,54 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 
 	// Navigate to home directory
 	pterm.Info.Printf("Navigating to home directory...")
-	err := runCommand("cd $HOME")
+	err := bash.RunCommand("cd $HOME")
 	if err != nil {
 		return err
 	}
 
 	// Download geth binary
 	pterm.Info.Printf("Downloading geth binary...")
-	err = runCommand("wget -O geth https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
+	err = bash.RunCommand("wget -O geth https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
 	if err != nil {
 		return err
 	}
 
 	// Make geth executable
 	pterm.Info.Printf("Setting execute permissions for geth...")
-	err = runCommand("chmod +x geth")
+	err = bash.RunCommand("chmod +x geth")
 	if err != nil {
 		return err
 	}
 
 	// Move geth to ~/go/bin/
 	pterm.Info.Printf("Moving geth to ~/go/bin/")
-	err = runCommand("rm -rf ~/go/bin/geth")
+	err = bash.RunCommand("rm -rf ~/go/bin/geth")
 	if err != nil {
 		return err
 	}
-	err = runCommand("mkdir -p \"$HOME/go/bin\"")
+	err = bash.RunCommand("mkdir -p \"$HOME/go/bin\"")
 	if err != nil {
 		return err
 	}
-	err = runCommand("mv $HOME/geth $HOME/go/bin/")
+	err = bash.RunCommand("mv $HOME/geth $HOME/go/bin/")
 	if err != nil {
 		return err
 	}
 
 	// Create necessary directories
 	pterm.Info.Printf("Creating necessary directories...")
-	err = runCommand("[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
+	err = bash.RunCommand("[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
 	if err != nil {
 		return err
 	}
-	err = runCommand("[ ! -d \"$HOME/.story/geth\" ] && mkdir -p \"$HOME/.story/geth\"")
+	err = bash.RunCommand("[ ! -d \"$HOME/.story/geth\" ] && mkdir -p \"$HOME/.story/geth\"")
 	if err != nil {
 		return err
 	}
 
 	// Install Story
 	pterm.Info.Printf("Cloning Story repository...")
-	err = runCommand("cd $HOME && rm -rf story && git clone https://github.com/piplabs/story")
+	err = bash.RunCommand("cd $HOME && rm -rf story && git clone https://github.com/piplabs/story")
 	if err != nil {
 		return err
 	}
@@ -310,24 +306,24 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	}
 
 	pterm.Info.Printf(fmt.Sprintf("Checking out version %s...", tag))
-	err = runCommand(fmt.Sprintf("cd story && git checkout %s", tag))
+	err = bash.RunCommand(fmt.Sprintf("cd story && git checkout %s", tag))
 	if err != nil {
 		return err
 	}
 
 	pterm.Info.Printf("Building Story binary...")
-	err = runCommand("cd story && go build -o story ./client")
+	err = bash.RunCommand("cd story && go build -o story ./client")
 	if err != nil {
 		return err
 	}
 
 	// Move story binary to ~/go/bin/
 	pterm.Info.Printf("Moving story binary to ~/go/bin/")
-	err = runCommand("rm -rf $HOME/go/bin/story")
+	err = bash.RunCommand("rm -rf $HOME/go/bin/story")
 	if err != nil {
 		return err
 	}
-	err = runCommand("mv $HOME/story/story $HOME/go/bin/")
+	err = bash.RunCommand("mv $HOME/story/story $HOME/go/bin/")
 	if err != nil {
 		return err
 	}
@@ -335,7 +331,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	// Initialize Story
 	pterm.Info.Printf("Initializing Story node...")
 	initCmd := fmt.Sprintf("story init --moniker %s --network iliad", moniker)
-	err = runCommand(initCmd)
+	err = bash.RunCommand(initCmd)
 	if err != nil {
 		return err
 	}
@@ -420,9 +416,9 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 	// Download snapshot based on provider
 	pterm.Info.Printf("Downloading snapshot...")
 	if strings.ToLower(snapshotProvider) == "krews" {
-		err = downloadSnapshotKrews(homeDir, pruningMode)
+		err = krews.DownloadSnapshotKrews(homeDir, pruningMode)
 	} else if strings.ToLower(snapshotProvider) == "itrocket" {
-		err = downloadSnapshotItrocket(homeDir, pruningMode)
+		err = itrocket.DownloadSnapshotItrocket(homeDir, pruningMode)
 	} else {
 		return errors.New("unknown snapshot provider")
 	}
@@ -432,174 +428,19 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 
 	// Enable and start services
 	pterm.Info.Printf("Enabling and starting services...")
-	err = runCommand("sudo systemctl daemon-reload")
+	err = bash.RunCommand("sudo systemctl daemon-reload")
 	if err != nil {
 		return err
 	}
-	err = runCommand("sudo systemctl enable story story-geth")
+	err = bash.RunCommand("sudo systemctl enable story story-geth")
 	if err != nil {
 		return err
 	}
-	err = runCommand("sudo systemctl restart story story-geth")
+	err = bash.RunCommand("sudo systemctl restart story story-geth")
 	if err != nil {
 		return err
 	}
 	pterm.Success.Printf("Node setup without Cosmovisor completed successfully.")
-
-	return nil
-}
-
-func installAndConfigureRcloneKrews(homeDir string) error {
-	// Check if Rclone is installed
-	_, err := exec.LookPath("rclone")
-	if err != nil {
-		pterm.Info.Printf("Rclone not found. Installing Rclone...")
-		// Install Rclone
-		installCmd := "sudo -v ; curl https://rclone.org/install.sh | sudo bash"
-		err = runCommand(installCmd)
-		if err != nil {
-			return err
-		}
-		pterm.Success.Printf("Rclone Installed")
-	} else {
-		pterm.Info.Printf("Rclone is Already Installed")
-	}
-
-	// Configure Rclone for Krews
-	pterm.Info.Printf("Configuring Rclone for Krews...")
-	rcloneConf := `[krews-snapshot]
-type = s3
-provider = DigitalOcean
-region = fra1
-endpoint = https://fra1.cdn.digitaloceanspaces.com
-`
-	rcloneConfDir := fmt.Sprintf("%s/.config/rclone", homeDir)
-	err = os.MkdirAll(rcloneConfDir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile(fmt.Sprintf("%s/rclone.conf", rcloneConfDir), []byte(rcloneConf), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Helper function to download a file with a progress bar
-func downloadFileWithProgress(url, dest string) error {
-	// Create the file
-	out, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	// Get the size
-	sizeStr := resp.Header.Get("Content-Length")
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil || size <= 0 {
-		return errors.New("invalid Content-Length")
-	}
-
-	// Create progress bar
-	p := mpb.New(
-		mpb.WithWidth(64),
-		mpb.WithRefreshRate(180*time.Millisecond),
-	)
-	bar := p.AddBar(int64(size),
-		mpb.PrependDecorators(
-			decor.Name("Downloading:", decor.WC{W: len("Downloading: "), C: decor.DidentRight}),
-			decor.CountersKibiByte("% .2f / % .2f"),
-		),
-		mpb.AppendDecorators(
-			decor.Percentage(decor.WC{W: 5}),
-		),
-	)
-
-	// Create a proxy reader
-	reader := bar.ProxyReader(resp.Body)
-	defer reader.Close()
-
-	// Write the body to file
-	_, err = io.Copy(out, reader)
-	if err != nil {
-		return err
-	}
-
-	p.Wait()
-
-	return nil
-}
-
-// Helper function to decompress LZ4 and extract tar
-func decompressAndExtractLz4Tar(lz4Path, destDir string) error {
-	// Open the LZ4 file
-	file, err := os.Open(lz4Path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Create LZ4 reader
-	lz4Reader := lz4.NewReader(file)
-
-	// Create tar reader
-	tarReader := tar.NewReader(lz4Reader)
-
-	// Iterate through the files in the tar archive
-	for {
-		header, err := tarReader.Next()
-
-		if err == io.EOF {
-			break // End of tar archive
-		}
-		if err != nil {
-			return err
-		}
-
-		// Determine proper file path
-		target := filepath.Join(destDir, header.Name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			// Create directory
-			if err := os.MkdirAll(target, os.FileMode(header.Mode)); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			// Create file
-			outFile, err := os.Create(target)
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(outFile, tarReader); err != nil {
-				outFile.Close()
-				return err
-			}
-			outFile.Close()
-
-			// Set permissions
-			if err := os.Chmod(target, os.FileMode(header.Mode)); err != nil {
-				return err
-			}
-		default:
-			// Unsupported type
-			pterm.Warning.Printf(fmt.Sprintf("Unsupported file type: %v in %s", header.Typeflag, header.Name))
-		}
-	}
 
 	return nil
 }
@@ -639,7 +480,7 @@ func downloadGenesisAndAddrbookWithoutCosmovisor(homeDir string) error {
 		fmt.Sprintf("wget -q -O %s/.story/story/config/addrbook.json https://server-3.itrocket.net/testnet/story/addrbook.json", homeDir),
 	}
 	for _, cmdStr := range cmds {
-		err := runCommand(cmdStr)
+		err := bash.RunCommand(cmdStr)
 		if err != nil {
 			return err
 		}
@@ -689,27 +530,6 @@ WantedBy=multi-user.target
 
 	err = os.WriteFile("/etc/systemd/system/story.service", []byte(storyServiceContent), 0644)
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runCommand(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	cmd.Env = os.Environ()
-
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("\n✖ Error executing command: %s %v\n", name, args)
-		fmt.Println("Error:", err)
-		fmt.Println("Stdout:", stdout.String())
-		fmt.Println("Stderr:", stderr.String())
 		return err
 	}
 
