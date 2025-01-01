@@ -21,6 +21,26 @@ var downloadCmd = &cobra.Command{
 	RunE:  runDownloadSnapshot,
 }
 
+func CallRunDownloadSnapshotManually(pruningMode string) error {
+	// Sahte bir *cobra.Command oluşturun
+	fakeCmd := &cobra.Command{
+		Use: "download",
+	}
+	// Flag’leri set edin
+	fakeCmd.Flags().String("output-path", "", "Download snapshot directly")
+	// Mesela output-path'e default değer vermek isterseniz:
+	// fakeCmd.Flags().Set("output-path", "/some/path")
+
+	// Argüman slice’ı (args) oluşturun. Örneğin boş:
+	args := []string{}
+
+	// Daha sonra `pruningMode` değişkenini global bir değişken olarak
+	// ya da `snapshot.pruningMode = pruningMode` gibi set edebilirsiniz.
+	// (Veya fonksiyon imzasını değiştirebilirsiniz.)
+
+	return runDownloadSnapshot(fakeCmd, args)
+}
+
 func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 	// Retrieve the output-path flag if any
 	outputPath, err := cmd.Flags().GetString("output-path")
@@ -29,20 +49,11 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 	}
 
 	// 1) Ask for pruning mode FIRST
-	pterm.Info.Println("Pruning Mode Information:")
-	pterm.Info.Println(" - Pruned Mode: Stores only recent blocks, reducing disk usage.")
-	pterm.Info.Println(" - Archive Mode: Stores the entire chain history, requiring more disk space.")
+	PruningModeInformation()
 
-	if pruningMode == "" {
-		pmPrompt := promptui.Select{
-			Label: "Select the pruning mode",
-			Items: []string{"pruned", "archive"},
-		}
-		_, pmResult, err := pmPrompt.Run()
-		if err != nil {
-			return err
-		}
-		pruningMode = pmResult
+	pruningMode, err := SelectPruningMode()
+	if err != nil {
+		pterm.Warning.Println(fmt.Sprintf("Failed to select pruning mode: %v", err))
 	}
 
 	// 2) Fetch data for all providers, specifically for the chosen pruning mode
@@ -170,4 +181,25 @@ func selectSnapshotProvider(providersData []providerSnapshotInfo) (string, error
 		return "", err
 	}
 	return items[i].Name, nil
+}
+
+func PruningModeInformation() {
+	pterm.Info.Println("Pruning Mode Information:")
+	pterm.Info.Println(" - Pruned Mode: Stores only recent blocks, reducing disk usage.")
+	pterm.Info.Println(" - Archive Mode: Stores the entire chain history, requiring more disk space.")
+}
+
+func SelectPruningMode() (string, error) {
+	if pruningMode == "" {
+		pmPrompt := promptui.Select{
+			Label: "Select the pruning mode",
+			Items: []string{"pruned", "archive"},
+		}
+		_, pmResult, err := pmPrompt.Run()
+		if err != nil {
+			return "", err
+		}
+		pruningMode = pmResult
+	}
+	return pruningMode, nil
 }

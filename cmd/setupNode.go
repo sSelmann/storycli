@@ -18,15 +18,13 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/spf13/cobra"
 
-	"github.com/sSelmann/storycli/snapshot_providers/itrocket"
-	"github.com/sSelmann/storycli/snapshot_providers/krews"
+	"github.com/sSelmann/storycli/cmd/snapshot"
 	"github.com/sSelmann/storycli/utils/bash"
 )
 
 var (
-	moniker          string
-	customPort       string
-	snapshotProvider string
+	moniker    string
+	customPort string
 )
 
 var (
@@ -139,33 +137,15 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	// Pruning mode info message
-	pterm.Info.Printf("\nPruning Mode Information:")
-	fmt.Printf(" - Pruned Mode: Stores only recent blockchain data, reducing disk usage. Snapshot size: %s\n", prunedSnapshotSize)
-	fmt.Printf(" - Archive Mode: Stores the entire blockchain history, requiring more disk space. Snapshot size: %s\n\n", archiveSnapshotSize)
+	snapshot.PruningModeInformation()
 
-	if pruningMode == "" {
-		prompt := promptui.Select{
-			Label: "Select the pruning mode",
-			Items: []string{"pruned", "archive"},
-		}
-		_, pruningMode, err = prompt.Run()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Step 4: Select Snapshot Provider
-	prompt := promptui.Select{
-		Label: "Select the snapshot provider",
-		Items: []string{"Itrocket", "Krews"},
-	}
-	_, snapshotProvider, err = prompt.Run()
+	pruningMode, err := snapshot.SelectPruningMode()
 	if err != nil {
-		return err
+		pterm.Warning.Println(fmt.Sprintf("Failed to select pruning mode: %v", err))
 	}
 
 	// Proceed with setup without Cosmovisor
-	err = setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider)
+	err = setupWithoutCosmovisor(moniker, customPort, pruningMode)
 	if err != nil {
 		return err
 	}
@@ -240,7 +220,7 @@ func getLatestReleaseTag(repo string) (string, error) {
 	return release.TagName, nil
 }
 
-func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider string) error {
+func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	homeDir, _ := os.UserHomeDir()
 	os.Setenv("MONIKER", moniker)
 	os.Setenv("STORY_PORT", customPort)
@@ -416,16 +396,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode, snapshotProvider s
 
 	// Download snapshot based on provider
 	pterm.Info.Printf("Downloading snapshot...")
-	if strings.ToLower(snapshotProvider) == "krews" {
-		err = krews.DownloadSnapshotKrews(homeDir, pruningMode)
-	} else if strings.ToLower(snapshotProvider) == "itrocket" {
-		err = itrocket.DownloadSnapshotItrocket(homeDir, pruningMode)
-	} else {
-		return errors.New("unknown snapshot provider")
-	}
-	if err != nil {
-		return err
-	}
+	snapshot.CallRunDownloadSnapshotManually(pruningMode)
 
 	// Enable and start services
 	pterm.Info.Printf("Enabling and starting services...")
