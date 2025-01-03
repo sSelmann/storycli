@@ -3,6 +3,7 @@ package snapshot
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/manifoldco/promptui"
 	"github.com/pterm/pterm"
@@ -21,118 +22,117 @@ var downloadCmd = &cobra.Command{
 	RunE:  runDownloadSnapshot,
 }
 
-func CallRunDownloadSnapshotManually(pruningMode string) error {
-	// Sahte bir *cobra.Command oluşturun
-	fakeCmd := &cobra.Command{
-		Use: "download",
-	}
-	// Flag’leri set edin
-	fakeCmd.Flags().String("output-path", "", "Download snapshot directly")
-	// Mesela output-path'e default değer vermek isterseniz:
-	// fakeCmd.Flags().Set("output-path", "/some/path")
-
-	// Argüman slice’ı (args) oluşturun. Örneğin boş:
-	args := []string{}
-
-	// Daha sonra `pruningMode` değişkenini global bir değişken olarak
-	// ya da `snapshot.pruningMode = pruningMode` gibi set edebilirsiniz.
-	// (Veya fonksiyon imzasını değiştirebilirsiniz.)
-
-	return runDownloadSnapshot(fakeCmd, args)
-}
-
 func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
-	// Retrieve the output-path flag if any
 	outputPath, err := cmd.Flags().GetString("output-path")
 	if err != nil {
-		return fmt.Errorf("failed to parse output-path flag: %v", err)
+		return fmt.Errorf("failed to parse output-path: %w", err)
+	}
+	return RunDownloadSnapshotCore(pruningMode, outputPath, false, homeDirFlag)
+}
+
+func CallRunDownloadSnapshotManually(pruningMode string, homedir string) error {
+	return RunDownloadSnapshotCore(pruningMode, "", true, homedir+".story")
+}
+
+func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, storyDir string) error {
+	if !isManual {
+		PruningModeInformation()
 	}
 
-	// 1) Ask for pruning mode FIRST
-	PruningModeInformation()
-
-	pruningMode, err := SelectPruningMode()
-	if err != nil {
-		pterm.Warning.Println(fmt.Sprintf("Failed to select pruning mode: %v", err))
+	if pruningMode == "" {
+		var err error
+		pruningMode, err = SelectPruningMode()
+		if err != nil {
+			return fmt.Errorf("failed to select pruning mode: %w", err)
+		}
 	}
 
-	// 2) Fetch data for all providers, specifically for the chosen pruning mode
 	pterm.Info.Println(fmt.Sprintf("Fetching snapshot data for providers (mode=%s)...", pruningMode))
-	providersData, err := fetchAllProvidersDataForMode(pruningMode) // includes Jnode
-	if err != nil {
-		pterm.Warning.Println(fmt.Sprintf("Failed to fetch providers data: %v", err))
+	providersData, err := fetchAllProvidersDataForMode(pruningMode)
+	if err != nil || len(providersData) == 0 {
+		return fmt.Errorf("no snapshot data found: %w", err)
 	}
 
-	if len(providersData) == 0 {
-		return errors.New("no snapshot data found for any provider")
-	}
-
-	// 3) Show provider selection prompt
-	selectedProvider, err = selectSnapshotProvider(providersData)
+	selectedProvider, err := selectSnapshotProvider(providersData)
 	if err != nil {
 		return err
 	}
 
-	// If --output-path is set, download directly and skip extra steps
 	if outputPath != "" {
-		pterm.Info.Println(fmt.Sprintf("Downloading snapshot from %s in %s mode to %s...", selectedProvider, pruningMode, outputPath))
-
-		switch selectedProvider {
-		case "Itrocket":
-			err = itrocket.DownloadSnapshotToPathItrocket(pruningMode, outputPath, endpoints.Itrocket)
-			if err != nil {
-				return fmt.Errorf("failed to download snapshot from Itrocket: %v", err)
-			}
-		case "Krews":
-			err = krews.DownloadSnapshotToPathKrews(pruningMode, outputPath)
-			if err != nil {
-				return fmt.Errorf("failed to download snapshot from Krews: %v", err)
-			}
-		case "Jnode":
-			err = jnode.DownloadSnapshotToPathJnode(pruningMode, outputPath, endpoints.Jnode)
-			if err != nil {
-				return fmt.Errorf("failed to download snapshot from Jnode: %v", err)
-			}
-		default:
-			return errors.New("provider not supported yet")
+		pterm.Info.Println(fmt.Sprintf("Downloading snapshot from %s to %s...", selectedProvider, outputPath))
+		return downloadToPath(selectedProvider, pruningMode, outputPath)
+	} else if !isManual {
+		storyDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
 		}
-
-		pterm.Success.Println(fmt.Sprintf("Snapshot successfully downloaded to %s from %s.", outputPath, selectedProvider))
-		return nil
+		sDir := storyDir + "/story"
+		gDir := storyDir + "/geth"
+		if _, err := os.Stat(sDir); err == nil {
+			pterm.Error.Println("Story path not found: " + sDir)
+			return err
+		}
+		if _, err := os.Stat(gDir); err == nil {
+			pterm.Error.Println("Geth path not found:" + gDir)
+			return err
+		}
 	}
 
-	// 4) Stop services
-	pterm.Info.Printf("Stopping services...")
-	if err := bash.RunCommand("sudo systemctl stop story story-geth"); err != nil {
-		return err
+	if !isManual {
+		pterm.Info.Println("Stopping services...")
+		if err := bash.RunCommand("sudo systemctl stop story story-geth"); err != nil {
+			return err
+		}
 	}
 
-	// 5) Download the snapshot from chosen provider & mode
-	switch selectedProvider {
+	return downloadAndApplySnapshot(selectedProvider, pruningMode)
+}
+
+func downloadToPath(provider, mode, path string) error {
+	switch provider {
 	case "Itrocket":
-		if err := itrocket.DownloadSnapshotItrocket(homeDirFlag, pruningMode); err != nil {
-			return err
-		}
+		return itrocket.DownloadSnapshotToPathItrocket(mode, path, endpoints.Itrocket)
 	case "Krews":
-		if err := krews.DownloadSnapshotKrews(homeDirFlag, pruningMode); err != nil {
-			return err
-		}
+		return krews.DownloadSnapshotToPathKrews(mode, path)
 	case "Jnode":
-		if err := jnode.DownloadSnapshotJnode(homeDirFlag, pruningMode, endpoints.Jnode); err != nil {
-			return err
-		}
+		return jnode.DownloadSnapshotToPathJnode(mode, path, endpoints.Jnode)
 	default:
-		return errors.New("provider not supported yet")
+		return errors.New("unsupported provider")
 	}
+}
 
-	// 6) Prompt user to restart
-	pterm.Info.Printf(
-		"Run %s to restart the systemd services and apply the new values\n",
-		pterm.DefaultBasicText.WithStyle(pterm.FgYellow.ToStyle()).
-			Sprintf("scli restart"),
-	)
+func downloadAndApplySnapshot(provider, mode string) error {
+	switch provider {
+	case "Itrocket":
+		return itrocket.DownloadSnapshotItrocket(homeDirFlag, mode)
+	case "Krews":
+		return krews.DownloadSnapshotKrews(homeDirFlag, mode)
+	case "Jnode":
+		return jnode.DownloadSnapshotJnode(homeDirFlag, mode, endpoints.Jnode)
+	default:
+		return errors.New("unsupported provider")
+	}
+}
 
-	return nil
+func PruningModeInformation() {
+	pterm.Info.Println("Pruning Mode Information:")
+	pterm.Info.Println(" - Pruned Mode: Stores only recent blocks, reducing disk usage.")
+	pterm.Info.Println(" - Archive Mode: Stores the entire chain history, requiring more disk space.")
+}
+
+func SelectPruningMode() (string, error) {
+	if pruningMode == "" {
+		pmPrompt := promptui.Select{
+			Label: "Select the pruning mode",
+			Items: []string{"pruned", "archive"},
+		}
+		_, pmResult, err := pmPrompt.Run()
+		if err != nil {
+			return "", err
+		}
+		pruningMode = pmResult
+	}
+	return pruningMode, nil
 }
 
 func selectSnapshotProvider(providersData []providerSnapshotInfo) (string, error) {
@@ -148,7 +148,6 @@ func selectSnapshotProvider(providersData []providerSnapshotInfo) (string, error
 
 	var items []providerDisplay
 	for _, pd := range providersData {
-		// e.g. "( mode: pruned | size: 46.50G | height: 1555254 | 1h 17m ago )"
 		extra := fmt.Sprintf("( mode: %s | size: %s | height: %s | %s )",
 			pd.Mode,
 			pd.TotalSize,
@@ -181,25 +180,4 @@ func selectSnapshotProvider(providersData []providerSnapshotInfo) (string, error
 		return "", err
 	}
 	return items[i].Name, nil
-}
-
-func PruningModeInformation() {
-	pterm.Info.Println("Pruning Mode Information:")
-	pterm.Info.Println(" - Pruned Mode: Stores only recent blocks, reducing disk usage.")
-	pterm.Info.Println(" - Archive Mode: Stores the entire chain history, requiring more disk space.")
-}
-
-func SelectPruningMode() (string, error) {
-	if pruningMode == "" {
-		pmPrompt := promptui.Select{
-			Label: "Select the pruning mode",
-			Items: []string{"pruned", "archive"},
-		}
-		_, pmResult, err := pmPrompt.Run()
-		if err != nil {
-			return "", err
-		}
-		pruningMode = pmResult
-	}
-	return pruningMode, nil
 }

@@ -31,14 +31,14 @@ func DownloadSnapshotKrews(homeDir, pruningMode string) error {
 	snapshotURL := fmt.Sprintf("krews-snapshot:krews-1-eu/%s", snapshotName)
 	destDir := filepath.Join(homeDir, ".story")
 
-	pterm.Info.Printf("Installing and configuring Rclone for Krews snapshot...")
+	pterm.Info.Println("Installing and configuring Rclone for Krews snapshot...")
 	err := installAndConfigureRcloneKrews(homeDir)
 	if err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Backup priv_validator_state.json...")
-	err = bash.RunCommand(fmt.Sprintf("cp %s/.story/story/data/priv_validator_state.json %s/.story/story/priv_validator_state.json.backup ", homeDir, homeDir))
+	pterm.Info.Println("Backup priv_validator_state.json...")
+	err = bash.RunCommand("cp", homeDir+"/.story/story/data/priv_validator_state.json", homeDir+"/.story/story/priv_validator_state.json.backup")
 	if err != nil {
 		return err
 	}
@@ -52,25 +52,35 @@ func DownloadSnapshotKrews(homeDir, pruningMode string) error {
 		return err
 	}
 
-	pterm.Info.Printf("Restoring priv_validator_state.json...")
-	err = bash.RunCommand(fmt.Sprintf("mv %s/.story/story/priv_validator_state.json.backup %s/.story/story/data/priv_validator_state.json", homeDir, homeDir))
+	pterm.Info.Println("Restoring priv_validator_state.json...")
+	err = bash.RunCommand("mv", homeDir+"/.story/story/priv_validator_state.json.backup"+homeDir+"/.story/story/data/priv_validator_state.json")
 	if err != nil {
 		return err
 	}
 
-	pterm.Success.Printf("Snapshot successfully downloaded from Krews.")
+	pterm.Success.Println("Snapshot successfully downloaded from Krews.")
 	return nil
 }
 
 func DownloadSnapshotToPathKrews(mode, path string) error {
 	snapshotName := fmt.Sprintf("story_testnet_%s_snapshot", mode)
 	snapshotURL := fmt.Sprintf("krews-snapshot:krews-1-eu/%s", snapshotName)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	pterm.Info.Println("Installing and configuring Rclone for Krews snapshot...")
+	err = installAndConfigureRcloneKrews(homeDir)
+	if err != nil {
+		return err
+	}
 
 	cmd := exec.Command("rclone", "copy", "--no-check-certificate", "--transfers=6", "--checkers=6", snapshotURL, path+"/"+snapshotName, "--progress")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("rclone copy failed: %v", err)
 	}
@@ -152,20 +162,19 @@ func installAndConfigureRcloneKrews(homeDir string) error {
 	// Check if Rclone is installed
 	_, err := exec.LookPath("rclone")
 	if err != nil {
-		pterm.Info.Printf("Rclone not found. Installing Rclone...")
+		pterm.Info.Println("Rclone not found. Installing Rclone...")
 		// Install Rclone
-		installCmd := "sudo -v ; curl https://rclone.org/install.sh | sudo bash"
-		err = bash.RunCommand(installCmd)
+		err = bash.RunCommand("bash", "-c", "sudo -v; curl https://rclone.org/install.sh | sudo bash")
 		if err != nil {
 			return err
 		}
-		pterm.Success.Printf("Rclone Installed")
+		pterm.Success.Println("Rclone Installed")
 	} else {
-		pterm.Info.Printf("Rclone is Already Installed")
+		pterm.Info.Println("Rclone is Already Installed")
 	}
 
 	// Configure Rclone for Krews
-	pterm.Info.Printf("Configuring Rclone for Krews...")
+	pterm.Info.Println("Configuring Rclone for Krews...")
 	rcloneConf := `[krews-snapshot]
 type = s3
 provider = DigitalOcean

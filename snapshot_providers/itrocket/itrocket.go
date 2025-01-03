@@ -50,7 +50,7 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return errors.New("no best server URL found for the selected mode")
 	}
 
-	pterm.Info.Println(fmt.Sprintf("Fetching snapshot names from Itrocket (%s)...", serverURL))
+	pterm.Info.Println(fmt.Sprintf("Fetching snapshot data from Itrocket (%s)...", serverURL))
 	resp, err := http.Get(serverURL)
 	if err != nil {
 		return err
@@ -65,31 +65,31 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return errors.New("failed to fetch snapshot names from Itrocket")
 	}
 
-	pterm.Info.Printf("Installing required packages for Itrocket snapshot...")
-	if err := bash.RunCommand("sudo apt install curl tmux jq lz4 unzip -y"); err != nil {
+	pterm.Info.Println("Installing required packages for Itrocket snapshot...")
+	if err := bash.RunCommand("sudo", "apt", "install", "curl", "tmux", "jq", "lz4", "unzip", "-y"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Stopping Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo systemctl stop story story-geth"); err != nil {
+	pterm.Info.Println("Stopping Story and Story-Geth services...")
+	if err := bash.RunCommand("sudo", "systemctl", "stop", "story", "story-geth"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Backup priv_validator_state.json...")
-	if err := bash.RunCommand(fmt.Sprintf("cp %s/.story/story/data/priv_validator_state.json %s/.story/story/priv_validator_state.json.backup", homeDir, homeDir)); err != nil {
+	pterm.Info.Println("Backup priv_validator_state.json...")
+	if err := bash.RunCommand("cp", homeDir+"/.story/story/data/priv_validator_state.json", homeDir+"/.story/story/priv_validator_state.json.backup"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Removing old Story data...")
+	pterm.Info.Println("Removing old Story data...")
 	storySnapshotURL := fmt.Sprintf("%s/%s", strings.TrimSuffix(serverURL, "/.current_state.json"), snapshotState.SnapshotName)
 	storySnapshotPath := filepath.Join(homeDir, ".story", "story_snapshot.tar.lz4")
 
-	pterm.Info.Printf("Downloading Story snapshot...")
-	if err := file.DownloadFileWithProgress(storySnapshotURL, storySnapshotPath); err != nil {
+	pterm.Info.Println("Downloading Story snapshot...")
+	if err := file.DownloadFileWithFilteredProgress(storySnapshotURL, storySnapshotPath); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Extracting Story snapshot...")
+	pterm.Info.Println("Extracting Story snapshot...")
 	if err := file.DecompressAndExtractLz4Tar(storySnapshotPath, filepath.Join(homeDir, ".story", "story")); err != nil {
 		return err
 	}
@@ -97,15 +97,15 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return err
 	}
 
-	pterm.Info.Printf("Removing old Geth data and downloading new Geth snapshot...")
+	pterm.Info.Println("Removing old Geth data...")
 	gethSnapshotURL := fmt.Sprintf("%s/%s", strings.TrimSuffix(serverURL, "/.current_state.json"), snapshotState.SnapshotGethName)
 	gethSnapshotPath := filepath.Join(homeDir, ".story", "geth_snapshot.tar.lz4")
 
-	pterm.Info.Printf("Downloading Geth snapshot...")
-	if err := file.DownloadFileWithProgress(gethSnapshotURL, gethSnapshotPath); err != nil {
+	pterm.Info.Println("Downloading Geth snapshot...")
+	if err := file.DownloadFileWithFilteredProgress(gethSnapshotURL, gethSnapshotPath); err != nil {
 		return err
 	}
-	pterm.Info.Printf("Extracting Geth snapshot...")
+	pterm.Info.Println("Extracting Geth snapshot...")
 	if err := file.DecompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "iliad", "geth")); err != nil {
 		return err
 	}
@@ -113,17 +113,17 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return err
 	}
 
-	pterm.Info.Printf("Restoring priv_validator_state.json...")
-	if err := bash.RunCommand(fmt.Sprintf("mv %s/.story/story/priv_validator_state.json.backup %s/.story/story/data/priv_validator_state.json", homeDir, homeDir)); err != nil {
+	pterm.Info.Println("Restoring priv_validator_state.json...")
+	if err := bash.RunCommand("mv", homeDir+"/.story/story/priv_validator_state.json.backup", homeDir+"/.story/story/data/priv_validator_state.json"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Starting Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo systemctl restart story story-geth"); err != nil {
+	pterm.Info.Println("Starting Story and Story-Geth services...")
+	if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
 		return err
 	}
 
-	pterm.Success.Printf("Snapshot successfully downloaded and applied from Itrocket.")
+	pterm.Success.Println("Snapshot successfully downloaded and applied from Itrocket.")
 	return nil
 }
 
@@ -151,13 +151,13 @@ func DownloadSnapshotToPathItrocket(mode, path string, endpoint config.ItrocketE
 	gethDestPath := filepath.Join(path, gethFileName)
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
-	err = file.DownloadFileWithProgress(storySnapshotURL, storyDestPath)
+	err = file.DownloadFileWithFilteredProgress(storySnapshotURL, storyDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Story snapshot: %v", err)
 	}
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
-	err = file.DownloadFileWithProgress(gethSnapshotURL, gethDestPath)
+	err = file.DownloadFileWithFilteredProgress(gethSnapshotURL, gethDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Geth snapshot: %v", err)
 	}

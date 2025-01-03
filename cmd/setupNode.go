@@ -64,6 +64,7 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	storyDir := fmt.Sprintf("%s/.story", homeDir)
+	storyRepoDir := fmt.Sprintf("%s/story", homeDir)
 	if _, err := os.Stat(storyDir); err == nil {
 		// Directory exists
 		prompt := promptui.Select{
@@ -77,15 +78,19 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 		}
 
 		if strings.ToLower(result) == "yes" {
+			err = bash.RunCommand("systemctl", "stop", "story", "story-geth")
+			if err != nil {
+				return err
+			}
 			err := os.RemoveAll(storyDir)
 			if err != nil {
 				return err
 			}
-			err = bash.RunCommand("systemctl stop story story-geth")
+			err = os.RemoveAll(storyRepoDir)
 			if err != nil {
 				return err
 			}
-			pterm.Success.Printf("Existing installation removed.")
+			pterm.Success.Println("Existing installation removed.")
 		} else {
 			pterm.Warning.Printf("Setup aborted.")
 			return nil
@@ -221,61 +226,70 @@ func getLatestReleaseTag(repo string) (string, error) {
 }
 
 func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	os.Setenv("MONIKER", moniker)
 	os.Setenv("STORY_PORT", customPort)
 	os.Setenv("PRUNING_MODE", pruningMode)
 
 	// Navigate to home directory
-	pterm.Info.Printf("Navigating to home directory...")
-	err := bash.RunCommand("cd $HOME")
+	pterm.Info.Println("Navigating to home directory...")
+	err = os.Chdir(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Download geth binary
-	pterm.Info.Printf("Downloading geth binary...")
-	err = bash.RunCommand("wget -O geth https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
+	pterm.Info.Println("Downloading geth binary...")
+	err = bash.RunCommand("wget", "-O", "geth", "https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
 	if err != nil {
 		return err
 	}
 
 	// Make geth executable
-	pterm.Info.Printf("Setting execute permissions for geth...")
-	err = bash.RunCommand("chmod +x geth")
+	pterm.Info.Println("Setting execute permissions for geth...")
+	err = bash.RunCommand("chmod", "+x", "geth")
 	if err != nil {
 		return err
 	}
 
 	// Move geth to ~/go/bin/
-	pterm.Info.Printf("Moving geth to ~/go/bin/")
-	err = bash.RunCommand("rm -rf ~/go/bin/geth")
+	pterm.Info.Println("Moving geth to " + homeDir + "/go/bin/")
+	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/geth")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("mkdir -p \"$HOME/go/bin\"")
+	err = bash.RunCommand("mkdir", "-p", homeDir+"/go/bin")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("mv $HOME/geth $HOME/go/bin/")
+	err = bash.RunCommand("mv", homeDir+"/geth", homeDir+"/go/bin/")
 	if err != nil {
 		return err
 	}
 
 	// Create necessary directories
-	pterm.Info.Printf("Creating necessary directories...")
-	err = bash.RunCommand("[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
-	if err != nil {
-		return err
-	}
-	err = bash.RunCommand("[ ! -d \"$HOME/.story/geth\" ] && mkdir -p \"$HOME/.story/geth\"")
+	pterm.Info.Println("Creating necessary directories...")
+	err = bash.RunCommand("bash", "-c", "[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
 	if err != nil {
 		return err
 	}
 
 	// Install Story
-	pterm.Info.Printf("Cloning Story repository...")
-	err = bash.RunCommand("cd $HOME && rm -rf story && git clone https://github.com/piplabs/story")
+	pterm.Info.Println("Cloning Story repository...")
+	err = os.Chdir(homeDir)
+	if err != nil {
+		return err
+	}
+
+	err = bash.RunCommand("rm", "-rf", "story")
+	if err != nil {
+		return err
+	}
+
+	err = bash.RunCommand("git", "clone", "https://github.com/piplabs/story")
 	if err != nil {
 		return err
 	}
@@ -286,53 +300,57 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 		return err
 	}
 
-	pterm.Info.Printf(fmt.Sprintf("Checking out version %s...", tag))
-	err = bash.RunCommand(fmt.Sprintf("cd story && git checkout %s", tag))
+	pterm.Info.Println(fmt.Sprintf("Checking out version %s...", tag))
+	err = os.Chdir("story")
 	if err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Building Story binary...")
-	err = bash.RunCommand("cd story && go build -o story ./client")
+	err = bash.RunCommand("git", "checkout", tag)
+	if err != nil {
+		return err
+	}
+
+	pterm.Info.Println("Building Story binary...")
+	err = bash.RunCommand("go", "build", "-o", "story", "./client")
 	if err != nil {
 		return err
 	}
 
 	// Move story binary to ~/go/bin/
-	pterm.Info.Printf("Moving story binary to ~/go/bin/")
-	err = bash.RunCommand("rm -rf $HOME/go/bin/story")
+	pterm.Info.Println("Moving story binary to " + homeDir + "/go/bin/")
+	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("mv $HOME/story/story $HOME/go/bin/")
+	err = bash.RunCommand("mv", homeDir+"/story/story", homeDir+"/go/bin/")
 	if err != nil {
 		return err
 	}
 
 	// Initialize Story
-	pterm.Info.Printf("Initializing Story node...")
-	initCmd := fmt.Sprintf("story init --moniker %s --network iliad", moniker)
-	err = bash.RunCommand(initCmd)
+	pterm.Info.Println("Initializing Story node...")
+	err = bash.RunCommand("story", "init", "--moniker", moniker, "--network", "iliad")
 	if err != nil {
 		return err
 	}
 
 	// Configure seeds and peers
-	pterm.Info.Printf("Configuring seeds and peers...")
+	pterm.Info.Println("Configuring seeds and peers...")
 	err = configureSeedsAndPeersWithoutCosmovisor(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Download genesis and addrbook
-	pterm.Info.Printf("Downloading genesis and addrbook...")
+	pterm.Info.Println("Downloading genesis and addrbook...")
 	err = downloadGenesisAndAddrbookWithoutCosmovisor(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Set custom ports in story.toml
-	pterm.Info.Printf("Setting custom ports in story.toml...")
+	pterm.Info.Println("Setting custom ports in story.toml...")
 	storyToml := fmt.Sprintf("%s/.story/story/config/story.toml", homeDir)
 	err = replaceInFile(storyToml, `:1317`, fmt.Sprintf(":%s317", customPort))
 	if err != nil {
@@ -344,7 +362,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	}
 
 	// Set custom ports in config.toml
-	pterm.Info.Printf("Setting custom ports in config.toml...")
+	pterm.Info.Println("Setting custom ports in config.toml...")
 	configToml := fmt.Sprintf("%s/.story/story/config/config.toml", homeDir)
 	publicIP, err := getPublicIP()
 	if err != nil {
@@ -373,7 +391,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	}
 
 	// Enable Prometheus
-	pterm.Info.Printf("Enabling Prometheus...")
+	pterm.Info.Println("Enabling Prometheus...")
 	err = replaceInFile(configToml, "prometheus = false", "prometheus = true")
 	if err != nil {
 		return err
@@ -388,31 +406,31 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	}
 
 	// Create systemd service files
-	pterm.Info.Printf("Creating systemd service files...")
+	pterm.Info.Println("Creating systemd service files...")
 	err = createServiceFilesWithoutCosmovisor(homeDir, customPort)
 	if err != nil {
 		return err
 	}
 
 	// Download snapshot based on provider
-	pterm.Info.Printf("Downloading snapshot...")
-	snapshot.CallRunDownloadSnapshotManually(pruningMode)
+	pterm.Info.Println("Downloading snapshot...")
+	snapshot.CallRunDownloadSnapshotManually(pruningMode, homeDir)
 
 	// Enable and start services
-	pterm.Info.Printf("Enabling and starting services...")
-	err = bash.RunCommand("sudo systemctl daemon-reload")
+	pterm.Info.Println("Enabling and starting services...")
+	err = bash.RunCommand("sudo", "systemctl", "daemon-reload")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("sudo systemctl enable story story-geth")
+	err = bash.RunCommand("sudo", "systemctl", "enable", "story", "story-geth")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("sudo systemctl restart story story-geth")
+	err = bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth")
 	if err != nil {
 		return err
 	}
-	pterm.Success.Printf("Node setup without Cosmovisor completed successfully.")
+	pterm.Success.Println("Node setup without Cosmovisor completed successfully.")
 
 	return nil
 }
@@ -447,15 +465,14 @@ func configureSeedsAndPeersWithoutCosmovisor(homeDir string) error {
 }
 
 func downloadGenesisAndAddrbookWithoutCosmovisor(homeDir string) error {
-	cmds := []string{
-		fmt.Sprintf("wget -q -O %s/.story/story/config/genesis.json https://server-3.itrocket.net/testnet/story/genesis.json", homeDir),
-		fmt.Sprintf("wget -q -O %s/.story/story/config/addrbook.json https://server-3.itrocket.net/testnet/story/addrbook.json", homeDir),
+	err := bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/genesis.json", "https://server-3.itrocket.net/testnet/story/genesis.json")
+	if err != nil {
+		return err
 	}
-	for _, cmdStr := range cmds {
-		err := bash.RunCommand(cmdStr)
-		if err != nil {
-			return err
-		}
+
+	err = bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/addrbook.json", "https://server-3.itrocket.net/testnet/story/addrbook.json")
+	if err != nil {
+		return err
 	}
 	return nil
 }

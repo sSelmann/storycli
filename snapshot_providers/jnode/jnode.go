@@ -135,26 +135,26 @@ func DownloadSnapshotToPathJnode(mode, path string, endpoint string) error {
 
 // DownloadSnapshotJnode downloads and applies the Jnode snapshot
 func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
-	pterm.Info.Printf("Installing required packages for Jnode snapshot...")
-	if err := bash.RunCommand("sudo apt-get install wget lz4 aria2 pv -y"); err != nil {
+	pterm.Info.Println("Installing required packages for Jnode snapshot...")
+	if err := bash.RunCommand("sudo", "apt-get", "install", "wget", "lz4", "aria2", "pv", "-y"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Stopping Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo systemctl stop story story-geth"); err != nil {
+	pterm.Info.Println("Stopping Story and Story-Geth services...")
+	if err := bash.RunCommand("sudo", "systemctl", "stop", "story", "story-geth"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Backing up priv_validator_state.json...")
-	if err := bash.RunCommand(fmt.Sprintf("cp %s/.story/story/data/priv_validator_state.json %s/.story/priv_validator_state.json.backup", homeDir, homeDir)); err != nil {
+	pterm.Info.Println("Backing up priv_validator_state.json...")
+	if err := bash.RunCommand("cp", homeDir+"/.story/story/data/priv_validator_state.json", homeDir+"/.story/priv_validator_state.json.backup"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Removing old Story and Geth data...")
-	if err := bash.RunCommand(fmt.Sprintf("rm -f %s/.story/story/data/*", homeDir)); err != nil {
+	pterm.Info.Println("Removing old Story and Geth data...")
+	if err := bash.RunCommand("bash", "-c", "rm", "-f", homeDir+"/.story/story/data/*"); err != nil {
 		return err
 	}
-	if err := bash.RunCommand(fmt.Sprintf("rm -rf %s/.story/geth/odyssey/geth/chaindata", homeDir)); err != nil {
+	if err := bash.RunCommand("bash", "-c", "rm", "-rf", homeDir+"/.story/geth/odyssey/geth/chaindata"); err != nil {
 		return err
 	}
 
@@ -188,39 +188,41 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 
 	pterm.Info.Printf("Downloading Story snapshot...")
 	storySnapshotPath := filepath.Join(homeDir, "Story_snapshot.lz4")
-	if err := bash.RunCommand(fmt.Sprintf("aria2c -x 16 -s 16 -k 1M %s -o %s", storySnapshotURL, storySnapshotPath)); err != nil {
+	if err := bash.RunCommand("aria2c", "-x", "16", "-s", "16", "-k", "1M", storySnapshotURL, "-o", storySnapshotPath); err != nil {
 		return fmt.Errorf("failed to download Story snapshot: %v", err)
 	}
 
 	pterm.Info.Printf("Downloading Geth snapshot...")
 	gethSnapshotPath := filepath.Join(homeDir, "Geth_snapshot.lz4")
-	if err := bash.RunCommand(fmt.Sprintf("aria2c -x 16 -s 16 -k 1M %s -o %s", gethSnapshotURL, gethSnapshotPath)); err != nil {
+	if err := bash.RunCommand("aria2c", "-x", "16", "-s", "16", "-k", "1M", gethSnapshotURL, "-o", gethSnapshotPath); err != nil {
 		return fmt.Errorf("failed to download Geth snapshot: %v", err)
 	}
 
 	pterm.Info.Printf("Extracting Story snapshot...")
-	if err := bash.RunCommand(fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/story/ > /dev/null", storySnapshotPath, homeDir)); err != nil {
+	storyExtractCmd := fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/story/ > /dev/null", storySnapshotPath, homeDir)
+	if err := bash.RunCommand("bash", "-c", storyExtractCmd); err != nil {
 		return fmt.Errorf("failed to extract Story snapshot: %v", err)
 	}
-	if err := bash.RunCommand(fmt.Sprintf("rm -f %s", storySnapshotPath)); err != nil {
+	if err := bash.RunCommand("rm", "-f", storySnapshotPath); err != nil {
 		return err
 	}
 
 	pterm.Info.Printf("Extracting Geth snapshot...")
-	if err := bash.RunCommand(fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/geth/odyssey/geth/ > /dev/null", gethSnapshotPath, homeDir)); err != nil {
+	gethExtractCmd := fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/geth/odyssey/geth/ > /dev/null", gethSnapshotPath, homeDir)
+	if err := bash.RunCommand("bash", "-c", gethExtractCmd); err != nil {
 		return fmt.Errorf("failed to extract Geth snapshot: %v", err)
 	}
-	if err := bash.RunCommand(fmt.Sprintf("rm -f %s", gethSnapshotPath)); err != nil {
+	if err := bash.RunCommand("rm", "-f", gethSnapshotPath); err != nil {
 		return err
 	}
 
 	pterm.Info.Printf("Restoring priv_validator_state.json...")
-	if err := bash.RunCommand(fmt.Sprintf("cp %s/.story/priv_validator_state.json.backup %s/.story/story/data/priv_validator_state.json", homeDir, homeDir)); err != nil {
+	if err := bash.RunCommand("cp", homeDir+"/.story/priv_validator_state.json.backup", homeDir+"/.story/story/data/priv_validator_state.json"); err != nil {
 		return err
 	}
 
 	pterm.Info.Printf("Starting Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo systemctl restart story story-geth"); err != nil {
+	if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
 		return err
 	}
 

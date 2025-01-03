@@ -2,13 +2,17 @@ package file
 
 import (
 	"archive/tar"
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pierrec/lz4/v4"
@@ -131,6 +135,74 @@ func DownloadFileWithProgress(url, dest string) error {
 	}
 
 	p.Wait()
+
+	return nil
+}
+
+func DownloadFileWithFilteredProgress(url, dest string) error {
+	// Check if aria2c is installed
+	_, err := exec.LookPath("aria2c")
+	if err != nil {
+		pterm.Warning.Println("aria2c is not installed.")
+		pterm.Info.Println("Attempting to install aria2...")
+
+		// Attempt to install aria2
+		installCmd := exec.Command("sudo", "apt-get", "install", "aria2", "-y")
+		var stderr bytes.Buffer
+		installCmd.Stderr = &stderr
+
+		if err := installCmd.Run(); err != nil {
+			return fmt.Errorf("failed to install aria2: %v\nDetails: %s", err, stderr.String())
+		}
+	}
+
+	// Prepare aria2c command
+	cmdArgs := []string{
+		"--max-concurrent-downloads=16",
+		"--split=16",
+		"--min-split-size=1M",
+		"--enable-color=false",      // Disable colors for cleaner output
+		"--console-log-level=error", // Suppress logs except errors
+		"--summary-interval=1",      // Update progress every second
+		"--dir=" + filepath.Dir(dest),
+		"--out=" + filepath.Base(dest),
+		url,
+	}
+
+	cmd := exec.Command("aria2c", cmdArgs...)
+
+	// Capture stdout and filter progress lines
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to capture stdout: %v", err)
+	}
+
+	cmd.Stderr = os.Stderr // Show errors if any
+
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start aria2c: %v", err)
+	}
+
+	// Filter progress lines and clean output
+	scanner := bufio.NewScanner(stdout)
+	lastLine := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "[#") { // Filter only progress lines
+			// Clean and update the line
+			lastLine = strings.TrimSpace(line)
+			fmt.Printf("\r%-80s", lastLine) // Clear previous line and overwrite
+		}
+	}
+
+	// Print final progress summary after completion
+	fmt.Printf("\r%-80s\n", "Download complete!") // Clear line and show completion message
+
+	// Wait for the command to finish
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("aria2c failed: %v", err)
+	}
 
 	return nil
 }
