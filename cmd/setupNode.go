@@ -79,17 +79,34 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 		}
 
 		if strings.ToLower(result) == "yes" {
-			err = bash.RunCommand("systemctl", "stop", "story", "story-geth")
-			if err != nil {
-				return err
+			// Check if the services exist and are running
+			pterm.Info.Println("Checking if Story and Story-Geth services are active...")
+			storyActive := checkServiceExistsAndActive("story")
+			storyGethActive := checkServiceExistsAndActive("story-geth")
+
+			pterm.Info.Println("Stopping Story services...")
+			if storyActive {
+				err = bash.RunCommand("sudo", "systemctl", "stop", "story")
+				if err != nil {
+					return fmt.Errorf("failed to stop Story service: %v", err)
+				}
 			}
+
+			if storyGethActive {
+				err = bash.RunCommand("sudo", "systemctl", "stop", "story-geth")
+				if err != nil {
+					return fmt.Errorf("failed to stop Story-Geth service: %v", err)
+				}
+			}
+
+			// Remove directories
 			err := os.RemoveAll(storyDir)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to remove Story directory: %v", err)
 			}
 			err = os.RemoveAll(storyRepoDir)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to remove Story repository directory: %v", err)
 			}
 			pterm.Success.Println("Existing installation removed.")
 		} else {
@@ -157,6 +174,12 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func checkServiceExistsAndActive(serviceName string) bool {
+	cmd := exec.Command("systemctl", "is-active", "--quiet", serviceName)
+	err := cmd.Run()
+	return err == nil // Eğer `systemctl is-active` başarılı dönerse, servis aktif demektir
 }
 
 func checkSystemResources() error {
@@ -313,7 +336,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	}
 
 	pterm.Info.Println("Building Story binary...")
-	err = bash.RunCommand("go", "build", "-o", "story", "./client")
+	err = bash.RunCommand("env", "PATH=$PATH:/usr/local/go/bin:$HOME/go/bin", "go", "build", "-o", "story", "./client")
 	if err != nil {
 		return err
 	}
