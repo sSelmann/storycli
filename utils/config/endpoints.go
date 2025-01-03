@@ -24,12 +24,14 @@ type itrocketAPIResponse struct {
 	Pruned  map[string]string `json:"pruned"`
 }
 
+var itrocketApiUrl = "https://snapshot-external-providers-api.krews.xyz/snapshots/itrocket"
+
 // fetchItrocketEndpointsFromAPI fetches the dynamic endpoints from the external API
 // and converts them to ItrocketEndpoints (pruned + archive URLs).
 func fetchItrocketEndpointsFromAPI() (ItrocketEndpoints, error) {
 	var result ItrocketEndpoints
 
-	apiURL := "https://snapshot-external-providers-api.krews.xyz/snapshots/itrocket"
+	apiURL := itrocketApiUrl
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return result, fmt.Errorf("failed to GET Itrocket endpoint API: %v", err)
@@ -66,6 +68,31 @@ func fetchItrocketEndpointsFromAPI() (ItrocketEndpoints, error) {
 		Archive: archiveList,
 	}
 	return result, nil
+}
+
+func FetchItrocketRootEndpointFromAPI() (string, error) {
+	apiURL := itrocketApiUrl
+
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to GET Itrocket endpoint API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("got non-OK status code %d from Itrocket endpoint API", resp.StatusCode)
+	}
+
+	var apiResp itrocketAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return "", fmt.Errorf("failed to decode Itrocket endpoint API response: %v", err)
+	}
+
+	if endpoint, ok := apiResp.Pruned["endpoint-1"]; ok {
+		return endpoint, nil
+	}
+
+	return "", fmt.Errorf("root endpoint not found in Itrocket API response")
 }
 
 // DefaultEndpoints returns the default API endpoints.

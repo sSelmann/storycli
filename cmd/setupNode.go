@@ -20,6 +20,7 @@ import (
 
 	"github.com/sSelmann/storycli/cmd/snapshot"
 	"github.com/sSelmann/storycli/utils/bash"
+	"github.com/sSelmann/storycli/utils/config"
 )
 
 var (
@@ -465,12 +466,17 @@ func configureSeedsAndPeersWithoutCosmovisor(homeDir string) error {
 }
 
 func downloadGenesisAndAddrbookWithoutCosmovisor(homeDir string) error {
-	err := bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/genesis.json", "https://server-3.itrocket.net/testnet/story/genesis.json")
+	endpoint, err := config.FetchItrocketRootEndpointFromAPI()
 	if err != nil {
 		return err
 	}
 
-	err = bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/addrbook.json", "https://server-3.itrocket.net/testnet/story/addrbook.json")
+	err = bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/genesis.json", "https://"+endpoint+"/testnet/story/genesis.json")
+	if err != nil {
+		return err
+	}
+
+	err = bash.RunCommand("wget", "-q", "-O", homeDir+"/.story/story/config/addrbook.json", "https://"+endpoint+"/testnet/story/addrbook.json")
 	if err != nil {
 		return err
 	}
