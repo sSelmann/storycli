@@ -110,7 +110,7 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 			}
 			pterm.Success.Println("Existing installation removed.")
 		} else {
-			pterm.Warning.Printf("Setup aborted.")
+			pterm.Warning.Println("Setup aborted.")
 			return nil
 		}
 	}
@@ -354,7 +354,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 
 	// Initialize Story
 	pterm.Info.Println("Initializing Story node...")
-	err = bash.RunCommand("story", "init", "--moniker", moniker, "--network", "iliad")
+	err = bash.RunCommand(homeDir+"/go/bin/story", "init", "--moniker", moniker, "--network", "iliad")
 	if err != nil {
 		return err
 	}
