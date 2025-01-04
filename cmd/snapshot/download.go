@@ -82,7 +82,7 @@ func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, stor
 
 	if !isManual {
 		pterm.Info.Println("Stopping services...")
-		if err := bash.RunCommand("sudo systemctl stop story story-geth"); err != nil {
+		if err := bash.RunCommand("sudo", "systemctl", "stop", "story", "story-geth"); err != nil {
 			return err
 		}
 	}
