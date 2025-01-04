@@ -198,7 +198,7 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 	if err := file.DecompressAndExtractLz4Tar(storySnapshotPath, filepath.Join(homeDir, ".story", "story")); err != nil {
 		return err
 	}
-	if err := bash.RunCommand("rm", "-f", storySnapshotPath); err != nil {
+	if err := bash.RunCommand("rm", "-rf", storySnapshotPath); err != nil {
 		return err
 	}
 
@@ -206,7 +206,7 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 	if err := file.DecompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "odyssey", "geth")); err != nil {
 		return err
 	}
-	if err := bash.RunCommand("rm", "-f", gethSnapshotPath); err != nil {
+	if err := bash.RunCommand("rm", "-rf", gethSnapshotPath); err != nil {
 		return err
 	}
 
