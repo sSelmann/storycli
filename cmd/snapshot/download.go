@@ -66,6 +66,8 @@ func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, stor
 		if err != nil {
 			return err
 		}
+
+		storyDir = storyDir + ".story"
 		sDir := storyDir + "/story"
 		gDir := storyDir + "/geth"
 		if _, err := os.Stat(sDir); err == nil {
