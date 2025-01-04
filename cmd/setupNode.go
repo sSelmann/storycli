@@ -267,18 +267,18 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 
 	// Download geth binary
 	pterm.Info.Println("Downloading geth binary...")
-	downloadGethBinary()
+	downloadBinary("geth")
 
 	// Make geth executable
-	pterm.Info.Println("Setting execute permissions for geth...")
-	err = bash.RunCommand("chmod", "+x", "geth")
+	pterm.Info.Println("Setting execute permissions for story-geth...")
+	err = bash.RunCommand("chmod", "+x", "story-geth")
 	if err != nil {
 		return err
 	}
 
 	// Move geth to ~/go/bin/
-	pterm.Info.Println("Moving geth to " + homeDir + "/go/bin/")
-	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/geth")
+	pterm.Info.Println("Moving story-geth to " + homeDir + "/go/bin/")
+	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story-geth")
 	if err != nil {
 		return err
 	}
@@ -286,7 +286,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("mv", homeDir+"/geth", homeDir+"/go/bin/")
+	err = bash.RunCommand("mv", homeDir+"/story-geth", homeDir+"/go/bin/")
 	if err != nil {
 		return err
 	}
@@ -298,45 +298,14 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 		return err
 	}
 
-	// Install Story
-	pterm.Info.Println("Cloning Story repository...")
+	// go back to home directory
 	err = os.Chdir(homeDir)
 	if err != nil {
 		return err
 	}
 
-	err = bash.RunCommand("rm", "-rf", "story")
-	if err != nil {
-		return err
-	}
-
-	err = bash.RunCommand("git", "clone", "https://github.com/piplabs/story")
-	if err != nil {
-		return err
-	}
-
-	// Get the latest release tag
-	tag, err := getLatestReleaseTag("piplabs/story")
-	if err != nil {
-		return err
-	}
-
-	pterm.Info.Println(fmt.Sprintf("Checking out version %s...", tag))
-	err = os.Chdir("story")
-	if err != nil {
-		return err
-	}
-
-	err = bash.RunCommand("git", "checkout", tag)
-	if err != nil {
-		return err
-	}
-
-	pterm.Info.Println("Building Story binary...")
-	err = bash.RunCommand("env", "PATH=$PATH:/usr/local/go/bin:$HOME/go/bin", "go", "build", "-o", "story", "./client")
-	if err != nil {
-		return err
-	}
+	pterm.Info.Println("Downloading story binary...")
+	downloadBinary("story")
 
 	// Move story binary to ~/go/bin/
 	pterm.Info.Println("Moving story binary to " + homeDir + "/go/bin/")
@@ -344,7 +313,13 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("mv", homeDir+"/story/story", homeDir+"/go/bin/")
+
+	err = bash.RunCommand("chmod", "+x", homeDir+"/story")
+	if err != nil {
+		return err
+	}
+
+	err = bash.RunCommand("mv", homeDir+"/story", homeDir+"/go/bin/")
 	if err != nil {
 		return err
 	}
@@ -511,7 +486,7 @@ After=network-online.target
 
 [Service]
 User=%s
-ExecStart=%s/go/bin/geth --odyssey --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
+ExecStart=%s/go/bin/story-geth --odyssey --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=65535
@@ -571,7 +546,7 @@ func getPublicIP() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-func getLatestGethVersion() (string, error) {
+func getLatestBinaryVersions(binary string) (string, error) {
 	apiURL := "https://snapshot-external-providers-api.krews.xyz/story/latest_versions"
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -582,31 +557,56 @@ func getLatestGethVersion() (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("received non-OK status code %d from API", resp.StatusCode)
 	}
-
+	var version string
 	var versions map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
 		return "", fmt.Errorf("failed to decode API response: %v", err)
 	}
 
-	gethVersion, exists := versions["geth-version"]
-	if !exists {
-		return "", fmt.Errorf("geth-version key not found in API response")
+	if binary == "geth" {
+		gethVersion, exists := versions["geth-version"]
+		if !exists {
+			return "", fmt.Errorf("geth-version key not found in API response")
+		}
+		version = gethVersion
+
+	} else if binary == "story" {
+		storyVersion, exists := versions["story-version"]
+		if !exists {
+			return "", fmt.Errorf("geth-version key not found in API response")
+		}
+		version = storyVersion
+	} else {
+		return "", fmt.Errorf("no valid binaries provided")
 	}
 
-	return gethVersion, nil
+	return version, nil
 }
 
-func downloadGethBinary() error {
-	gethVersion, err := getLatestGethVersion()
+func downloadBinary(binary string) error {
+	binaryVersion, err := getLatestBinaryVersions(binary)
 	if err != nil {
-		return fmt.Errorf("failed to fetch Geth version: %v", err)
+		return fmt.Errorf("failed to fetch "+binary+" version: %v", err)
 	}
 
-	downloadURL := fmt.Sprintf("https://github.com/piplabs/story-geth/releases/download/%s/geth-linux-amd64", gethVersion)
+	if binary == "geth" {
+		downloadURL := fmt.Sprintf("https://github.com/piplabs/story-geth/releases/download/%s/geth-linux-amd64", binaryVersion)
 
-	err = bash.RunCommand("wget", "-O", "geth", downloadURL)
-	if err != nil {
-		return fmt.Errorf("failed to download Geth binary: %v", err)
+		err = bash.RunCommand("wget", "-O", "story-geth", downloadURL)
+		if err != nil {
+			return fmt.Errorf("failed to download Geth binary: %v", err)
+		}
+
+	} else if binary == "story" {
+		downloadURL := fmt.Sprintf("https://github.com/piplabs/story/releases/download/%s/story-linux-amd64", binaryVersion)
+
+		err = bash.RunCommand("wget", "-O", "story", downloadURL)
+		if err != nil {
+			return fmt.Errorf("failed to download Geth binary: %v", err)
+		}
+
+	} else {
+		return fmt.Errorf("no valid binaries provided")
 	}
 
 	return nil
