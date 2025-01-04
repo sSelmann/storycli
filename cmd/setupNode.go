@@ -267,10 +267,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 
 	// Download geth binary
 	pterm.Info.Println("Downloading geth binary...")
-	err = bash.RunCommand("wget", "-O", "geth", "https://github.com/piplabs/story-geth/releases/latest/download/geth-linux-amd64")
-	if err != nil {
-		return err
-	}
+	downloadGethBinary()
 
 	// Make geth executable
 	pterm.Info.Println("Setting execute permissions for geth...")
@@ -572,4 +569,45 @@ func getPublicIP() (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+func getLatestGethVersion() (string, error) {
+	apiURL := "https://snapshot-external-providers-api.krews.xyz/story/latest_versions"
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch latest versions: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received non-OK status code %d from API", resp.StatusCode)
+	}
+
+	var versions map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
+		return "", fmt.Errorf("failed to decode API response: %v", err)
+	}
+
+	gethVersion, exists := versions["geth-version"]
+	if !exists {
+		return "", fmt.Errorf("geth-version key not found in API response")
+	}
+
+	return gethVersion, nil
+}
+
+func downloadGethBinary() error {
+	gethVersion, err := getLatestGethVersion()
+	if err != nil {
+		return fmt.Errorf("failed to fetch Geth version: %v", err)
+	}
+
+	downloadURL := fmt.Sprintf("https://github.com/piplabs/story-geth/releases/download/%s/geth-linux-amd64", gethVersion)
+
+	err = bash.RunCommand("wget", "-O", "geth", downloadURL)
+	if err != nil {
+		return fmt.Errorf("failed to download Geth binary: %v", err)
+	}
+
+	return nil
 }
