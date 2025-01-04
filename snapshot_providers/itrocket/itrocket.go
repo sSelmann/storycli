@@ -106,7 +106,7 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return err
 	}
 	pterm.Info.Println("Extracting Geth snapshot...")
-	if err := file.DecompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "iliad", "geth")); err != nil {
+	if err := file.DecompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "odyssey", "geth")); err != nil {
 		return err
 	}
 	if err := os.Remove(gethSnapshotPath); err != nil {
