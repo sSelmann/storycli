@@ -119,13 +119,13 @@ func DownloadSnapshotToPathJnode(mode, path string, endpoint string) error {
 	gethDestPath := filepath.Join(path, gethFileName)
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Jnode Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
-	err = file.DownloadFileWithProgress(storySnapshotURL, storyDestPath)
+	err = file.DownloadFileWithAria2(storySnapshotURL, storyDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Jnode Story snapshot: %v", err)
 	}
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Jnode Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
-	err = file.DownloadFileWithProgress(gethSnapshotURL, gethDestPath)
+	err = file.DownloadFileWithAria2(gethSnapshotURL, gethDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Jnode Geth snapshot: %v", err)
 	}
@@ -151,10 +151,10 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 	}
 
 	pterm.Info.Println("Removing old Story and Geth data...")
-	if err := bash.RunCommand("bash", "-c", "rm", "-f", homeDir+"/.story/story/data/*"); err != nil {
+	if err := bash.RunCommand("rm", "-rf", homeDir+"/.story/story/data/*"); err != nil {
 		return err
 	}
-	if err := bash.RunCommand("bash", "-c", "rm", "-rf", homeDir+"/.story/geth/odyssey/geth/chaindata"); err != nil {
+	if err := bash.RunCommand("rm", "-rf", homeDir+"/.story/geth/odyssey/geth/chaindata"); err != nil {
 		return err
 	}
 
@@ -186,46 +186,40 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 		return fmt.Errorf("unsupported mode: %s", mode)
 	}
 
-	pterm.Info.Printf("Downloading Story snapshot...")
+	pterm.Info.Println("Downloading Story snapshot...")
 	storySnapshotPath := filepath.Join(homeDir, "Story_snapshot.lz4")
-	if err := bash.RunCommand("aria2c", "-x", "16", "-s", "16", "-k", "1M", storySnapshotURL, "-o", storySnapshotPath); err != nil {
-		return fmt.Errorf("failed to download Story snapshot: %v", err)
-	}
+	file.DownloadFileWithAria2(storySnapshotURL, storySnapshotPath)
 
-	pterm.Info.Printf("Downloading Geth snapshot...")
+	pterm.Info.Println("Downloading Geth snapshot...")
 	gethSnapshotPath := filepath.Join(homeDir, "Geth_snapshot.lz4")
-	if err := bash.RunCommand("aria2c", "-x", "16", "-s", "16", "-k", "1M", gethSnapshotURL, "-o", gethSnapshotPath); err != nil {
-		return fmt.Errorf("failed to download Geth snapshot: %v", err)
-	}
+	file.DownloadFileWithAria2(gethSnapshotURL, gethSnapshotPath)
 
-	pterm.Info.Printf("Extracting Story snapshot...")
-	storyExtractCmd := fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/story/ > /dev/null", storySnapshotPath, homeDir)
-	if err := bash.RunCommand("bash", "-c", storyExtractCmd); err != nil {
-		return fmt.Errorf("failed to extract Story snapshot: %v", err)
+	pterm.Info.Println("Extracting Story snapshot...")
+	if err := file.DecompressAndExtractLz4Tar(storySnapshotPath, filepath.Join(homeDir, ".story", "story")); err != nil {
+		return err
 	}
 	if err := bash.RunCommand("rm", "-f", storySnapshotPath); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Extracting Geth snapshot...")
-	gethExtractCmd := fmt.Sprintf("lz4 -d -c %s | pv | sudo tar xv -C %s/.story/geth/odyssey/geth/ > /dev/null", gethSnapshotPath, homeDir)
-	if err := bash.RunCommand("bash", "-c", gethExtractCmd); err != nil {
-		return fmt.Errorf("failed to extract Geth snapshot: %v", err)
+	pterm.Info.Println("Extracting Geth snapshot...")
+	if err := file.DecompressAndExtractLz4Tar(gethSnapshotPath, filepath.Join(homeDir, ".story", "geth", "odyssey", "geth")); err != nil {
+		return err
 	}
 	if err := bash.RunCommand("rm", "-f", gethSnapshotPath); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Restoring priv_validator_state.json...")
+	pterm.Info.Println("Restoring priv_validator_state.json...")
 	if err := bash.RunCommand("cp", homeDir+"/.story/priv_validator_state.json.backup", homeDir+"/.story/story/data/priv_validator_state.json"); err != nil {
 		return err
 	}
 
-	pterm.Info.Printf("Starting Story and Story-Geth services...")
+	pterm.Info.Println("Starting Story and Story-Geth services...")
 	if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
 		return err
 	}
 
-	pterm.Success.Printf("Snapshot successfully downloaded and applied from Jnode.")
+	pterm.Success.Println("Snapshot successfully downloaded and applied from Jnode.")
 	return nil
 }

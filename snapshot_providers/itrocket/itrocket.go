@@ -85,7 +85,7 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 	storySnapshotPath := filepath.Join(homeDir, ".story", "story_snapshot.tar.lz4")
 
 	pterm.Info.Println("Downloading Story snapshot...")
-	if err := file.DownloadFileWithFilteredProgress(storySnapshotURL, storySnapshotPath); err != nil {
+	if err := file.DownloadFileWithAria2(storySnapshotURL, storySnapshotPath); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 	gethSnapshotPath := filepath.Join(homeDir, ".story", "geth_snapshot.tar.lz4")
 
 	pterm.Info.Println("Downloading Geth snapshot...")
-	if err := file.DownloadFileWithFilteredProgress(gethSnapshotURL, gethSnapshotPath); err != nil {
+	if err := file.DownloadFileWithAria2(gethSnapshotURL, gethSnapshotPath); err != nil {
 		return err
 	}
 	pterm.Info.Println("Extracting Geth snapshot...")
@@ -151,13 +151,13 @@ func DownloadSnapshotToPathItrocket(mode, path string, endpoint config.ItrocketE
 	gethDestPath := filepath.Join(path, gethFileName)
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Story snapshot from %s to %s...", storySnapshotURL, storyDestPath))
-	err = file.DownloadFileWithFilteredProgress(storySnapshotURL, storyDestPath)
+	err = file.DownloadFileWithAria2(storySnapshotURL, storyDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Story snapshot: %v", err)
 	}
 
 	pterm.Info.Println(fmt.Sprintf("Downloading Itrocket Geth snapshot from %s to %s...", gethSnapshotURL, gethDestPath))
-	err = file.DownloadFileWithFilteredProgress(gethSnapshotURL, gethDestPath)
+	err = file.DownloadFileWithAria2(gethSnapshotURL, gethDestPath)
 	if err != nil {
 		return fmt.Errorf("failed to download Itrocket Geth snapshot: %v", err)
 	}

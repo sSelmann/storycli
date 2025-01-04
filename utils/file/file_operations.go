@@ -139,7 +139,7 @@ func DownloadFileWithProgress(url, dest string) error {
 	return nil
 }
 
-func DownloadFileWithFilteredProgress(url, dest string) error {
+func DownloadFileWithAria2(url, dest string) error {
 	// Check if aria2c is installed
 	_, err := exec.LookPath("aria2c")
 	if err != nil {
@@ -158,10 +158,10 @@ func DownloadFileWithFilteredProgress(url, dest string) error {
 
 	// Prepare aria2c command
 	cmdArgs := []string{
-		"--max-concurrent-downloads=16",
 		"--split=16",
+		"--max-connection-per-server=16",
 		"--min-split-size=1M",
-		"--enable-color=false",      // Disable colors for cleaner output
+		"--enable-color=true",       // Disable colors for cleaner output
 		"--console-log-level=error", // Suppress logs except errors
 		"--summary-interval=1",      // Update progress every second
 		"--dir=" + filepath.Dir(dest),
@@ -197,7 +197,8 @@ func DownloadFileWithFilteredProgress(url, dest string) error {
 	}
 
 	// Print final progress summary after completion
-	fmt.Printf("\r%-80s\n", "Download complete!") // Clear line and show completion message
+	fmt.Printf("\r%-80s\n", "") // Clear line and show completion message
+	pterm.Info.Println("Download complete!")
 
 	// Wait for the command to finish
 	if err := cmd.Wait(); err != nil {
