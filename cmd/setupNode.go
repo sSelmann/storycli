@@ -354,7 +354,7 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 
 	// Initialize Story
 	pterm.Info.Println("Initializing Story node...")
-	err = bash.RunCommand(homeDir+"/go/bin/story", "init", "--moniker", moniker, "--network", "iliad")
+	err = bash.RunCommand(homeDir+"/go/bin/story", "init", "--moniker", moniker, "--network", "odyssey")
 	if err != nil {
 		return err
 	}
@@ -514,7 +514,7 @@ After=network-online.target
 
 [Service]
 User=%s
-ExecStart=%s/go/bin/geth --iliad --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
+ExecStart=%s/go/bin/geth --odyssey --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=65535
