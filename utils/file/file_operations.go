@@ -161,7 +161,7 @@ func DownloadFileWithAria2(url, dest string) error {
 		"--split=16",
 		"--max-connection-per-server=16",
 		"--min-split-size=1M",
-		"--enable-color=true",       // Disable colors for cleaner output
+		"--enable-color=false",      // Disable colors for cleaner output
 		"--console-log-level=error", // Suppress logs except errors
 		"--summary-interval=1",      // Update progress every second
 		"--dir=" + filepath.Dir(dest),
@@ -186,24 +186,35 @@ func DownloadFileWithAria2(url, dest string) error {
 
 	// Filter progress lines and clean output
 	scanner := bufio.NewScanner(stdout)
-	lastLine := ""
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "[#") { // Filter only progress lines
-			// Clean and update the line
-			lastLine = strings.TrimSpace(line)
-			fmt.Printf("\r%-80s", lastLine) // Clear previous line and overwrite
+			// Extract the part after "[#" and clean it
+			cleanLine := extractProgress(line)
+			fmt.Printf("\r%s", cleanLine) // Print progress in clean format
 		}
 	}
 
-	// Print final progress summary after completion
-	fmt.Printf("\r%-80s\n", "") // Clear line and show completion message
-	pterm.Info.Println("Download complete!")
+	// Ensure a new line is printed after progress updates
+	fmt.Println()
 
 	// Wait for the command to finish
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("aria2c failed: %v", err)
 	}
 
+	// Print final progress summary after completion
+	pterm.Info.Println("Download complete!")
 	return nil
+}
+
+// extractProgress filters and cleans progress lines
+func extractProgress(line string) string {
+	// Remove the hash (e.g., bd33ff) and clean extra brackets
+	parts := strings.SplitN(line, " ", 2)
+	if len(parts) < 2 {
+		return line // If unexpected format, return as-is
+	}
+	// Add the missing "[" and return the cleaned progress part
+	return "[" + parts[1]
 }
