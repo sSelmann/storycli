@@ -5,6 +5,7 @@ import (
 	"github.com/sSelmann/storycli/snapshot_providers/itrocket"
 	"github.com/sSelmann/storycli/snapshot_providers/jnode"
 	"github.com/sSelmann/storycli/snapshot_providers/krews"
+	"github.com/sSelmann/storycli/snapshot_providers/mandragora"
 )
 
 // providerSnapshotInfo holds data displayed for each provider
@@ -41,40 +42,6 @@ func fetchAllProvidersDataForModes(modes []string) ([]providerSnapshotInfo, erro
 			})
 		}
 
-		// KREWS
-		kPrunedSize, kArchiveSize,
-			kPrunedBlock, kArchiveBlock,
-			kPrunedTimeAgo, kArchiveTimeAgo,
-			err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
-		if err != nil {
-			pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
-			results = append(results, providerSnapshotInfo{
-				ProviderName: "Krews",
-				Mode:         mode,
-				TotalSize:    "unknown",
-				BlockHeight:  "N/A",
-				TimeAgo:      "N/A",
-			})
-		} else {
-			var size, blockH, timeAgo string
-			if mode == "pruned" {
-				size = kPrunedSize
-				blockH = kPrunedBlock
-				timeAgo = kPrunedTimeAgo
-			} else {
-				size = kArchiveSize
-				blockH = kArchiveBlock
-				timeAgo = kArchiveTimeAgo
-			}
-			results = append(results, providerSnapshotInfo{
-				ProviderName: "Krews",
-				Mode:         mode,
-				TotalSize:    size,
-				BlockHeight:  blockH,
-				TimeAgo:      timeAgo,
-			})
-		}
-
 		// JNODE
 		jPrunedSize, jArchiveSize,
 			jPrunedBlock, jArchiveBlock,
@@ -102,6 +69,74 @@ func fetchAllProvidersDataForModes(modes []string) ([]providerSnapshotInfo, erro
 			}
 			results = append(results, providerSnapshotInfo{
 				ProviderName: "Jnode",
+				Mode:         mode,
+				TotalSize:    size,
+				BlockHeight:  blockH,
+				TimeAgo:      timeAgo,
+			})
+		}
+
+		// MANDRAGORA
+		mPrunedSize, mArchiveSize,
+			mPrunedBlock, mArchiveBlock,
+			mPrunedTimeAgo, mArchiveTimeAgo,
+			err := mandragora.FetchSnapshotSizesMandragora()
+		if err != nil {
+			pterm.Warning.Printf("Failed to fetch Mandragora data (mode=%s): %v\n", mode, err)
+			results = append(results, providerSnapshotInfo{
+				ProviderName: "Mandragora",
+				Mode:         mode,
+				TotalSize:    "unknown",
+				BlockHeight:  "N/A",
+				TimeAgo:      "N/A",
+			})
+		} else {
+			var size, blockH, timeAgo string
+			if mode == "pruned" {
+				size = mPrunedSize
+				blockH = mPrunedBlock
+				timeAgo = mPrunedTimeAgo
+			} else {
+				size = mArchiveSize
+				blockH = mArchiveBlock
+				timeAgo = mArchiveTimeAgo
+			}
+			results = append(results, providerSnapshotInfo{
+				ProviderName: "Mandragora",
+				Mode:         mode,
+				TotalSize:    size,
+				BlockHeight:  blockH,
+				TimeAgo:      timeAgo,
+			})
+		}
+
+		// KREWS
+		kPrunedSize, kArchiveSize,
+			kPrunedBlock, kArchiveBlock,
+			kPrunedTimeAgo, kArchiveTimeAgo,
+			err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
+		if err != nil {
+			pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
+			results = append(results, providerSnapshotInfo{
+				ProviderName: "Krews",
+				Mode:         mode,
+				TotalSize:    "unknown",
+				BlockHeight:  "N/A",
+				TimeAgo:      "N/A",
+			})
+		} else {
+			var size, blockH, timeAgo string
+			if mode == "pruned" {
+				size = kPrunedSize
+				blockH = kPrunedBlock
+				timeAgo = kPrunedTimeAgo
+			} else {
+				size = kArchiveSize
+				blockH = kArchiveBlock
+				timeAgo = kArchiveTimeAgo
+			}
+			results = append(results, providerSnapshotInfo{
+				ProviderName: "Krews",
 				Mode:         mode,
 				TotalSize:    size,
 				BlockHeight:  blockH,
@@ -137,40 +172,6 @@ func fetchAllProvidersDataForMode(mode string) ([]providerSnapshotInfo, error) {
 		})
 	}
 
-	// KREWS
-	kPrunedSize, kArchiveSize,
-		kPrunedBlock, kArchiveBlock,
-		kPrunedTimeAgo, kArchiveTimeAgo,
-		err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
-	if err != nil {
-		pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
-		results = append(results, providerSnapshotInfo{
-			ProviderName: "Krews",
-			Mode:         mode,
-			TotalSize:    "unknown",
-			BlockHeight:  "N/A",
-			TimeAgo:      "N/A",
-		})
-	} else {
-		var size, blockH, timeAgo string
-		if mode == "pruned" {
-			size = kPrunedSize
-			blockH = kPrunedBlock
-			timeAgo = kPrunedTimeAgo
-		} else {
-			size = kArchiveSize
-			blockH = kArchiveBlock
-			timeAgo = kArchiveTimeAgo
-		}
-		results = append(results, providerSnapshotInfo{
-			ProviderName: "Krews",
-			Mode:         mode,
-			TotalSize:    size,
-			BlockHeight:  blockH,
-			TimeAgo:      timeAgo,
-		})
-	}
-
 	// JNODE
 	jPrunedSize, jArchiveSize,
 		jPrunedBlock, jArchiveBlock,
@@ -198,6 +199,74 @@ func fetchAllProvidersDataForMode(mode string) ([]providerSnapshotInfo, error) {
 		}
 		results = append(results, providerSnapshotInfo{
 			ProviderName: "Jnode",
+			Mode:         mode,
+			TotalSize:    size,
+			BlockHeight:  blockH,
+			TimeAgo:      timeAgo,
+		})
+	}
+
+	// MANDRAGORA
+	mPrunedSize, mArchiveSize,
+		mPrunedBlock, mArchiveBlock,
+		mPrunedTimeAgo, mArchiveTimeAgo,
+		err := mandragora.FetchSnapshotSizesMandragora()
+	if err != nil {
+		pterm.Warning.Printf("Failed to fetch Mandragora data (mode=%s): %v\n", mode, err)
+		results = append(results, providerSnapshotInfo{
+			ProviderName: "Mandragora",
+			Mode:         mode,
+			TotalSize:    "unknown",
+			BlockHeight:  "N/A",
+			TimeAgo:      "N/A",
+		})
+	} else {
+		var size, blockH, timeAgo string
+		if mode == "pruned" {
+			size = mPrunedSize
+			blockH = mPrunedBlock
+			timeAgo = mPrunedTimeAgo
+		} else {
+			size = mArchiveSize
+			blockH = mArchiveBlock
+			timeAgo = mArchiveTimeAgo
+		}
+		results = append(results, providerSnapshotInfo{
+			ProviderName: "Mandragora",
+			Mode:         mode,
+			TotalSize:    size,
+			BlockHeight:  blockH,
+			TimeAgo:      timeAgo,
+		})
+	}
+
+	// KREWS
+	kPrunedSize, kArchiveSize,
+		kPrunedBlock, kArchiveBlock,
+		kPrunedTimeAgo, kArchiveTimeAgo,
+		err := krews.FetchSnapshotSizesKrews(endpoints.Krews)
+	if err != nil {
+		pterm.Warning.Printf("Failed to fetch Krews data (mode=%s): %v\n", mode, err)
+		results = append(results, providerSnapshotInfo{
+			ProviderName: "Krews",
+			Mode:         mode,
+			TotalSize:    "unknown",
+			BlockHeight:  "N/A",
+			TimeAgo:      "N/A",
+		})
+	} else {
+		var size, blockH, timeAgo string
+		if mode == "pruned" {
+			size = kPrunedSize
+			blockH = kPrunedBlock
+			timeAgo = kPrunedTimeAgo
+		} else {
+			size = kArchiveSize
+			blockH = kArchiveBlock
+			timeAgo = kArchiveTimeAgo
+		}
+		results = append(results, providerSnapshotInfo{
+			ProviderName: "Krews",
 			Mode:         mode,
 			TotalSize:    size,
 			BlockHeight:  blockH,

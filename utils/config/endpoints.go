@@ -14,9 +14,10 @@ type ItrocketEndpoints struct {
 
 // Endpoints struct holds all API endpoints for different providers.
 type Endpoints struct {
-	Itrocket ItrocketEndpoints
-	Krews    string
-	Jnode    string
+	Itrocket   ItrocketEndpoints
+	Krews      string
+	Jnode      string
+	Mandragora string
 }
 
 type itrocketAPIResponse struct {
@@ -105,8 +106,9 @@ func DefaultEndpoints() Endpoints {
 	}
 
 	return Endpoints{
-		Itrocket: dynamicItrocket,
-		Krews:    "https://snapshots-api.krews.xyz/api/snapshots/story",
-		Jnode:    "https://snapshot-external-providers-api.krews.xyz/snapshots/jnode",
+		Itrocket:   dynamicItrocket,
+		Krews:      "https://snapshots-api.krews.xyz/api/snapshots/story",
+		Jnode:      "https://snapshot-external-providers-api.krews.xyz/snapshots/jnode",
+		Mandragora: "https://snapshot-external-providers-api.krews.xyz/snapshots/mandragora",
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/sSelmann/storycli/snapshot_providers/itrocket"
 	"github.com/sSelmann/storycli/snapshot_providers/jnode"
 	"github.com/sSelmann/storycli/snapshot_providers/krews"
+	"github.com/sSelmann/storycli/snapshot_providers/mandragora"
 	"github.com/sSelmann/storycli/utils/bash"
 	"github.com/spf13/cobra"
 )
@@ -98,6 +99,8 @@ func downloadToPath(provider, mode, path string) error {
 		return krews.DownloadSnapshotToPathKrews(mode, path)
 	case "Jnode":
 		return jnode.DownloadSnapshotToPathJnode(mode, path, endpoints.Jnode)
+	case "Mandragora":
+		return mandragora.DownloadSnapshotToPathMandragora(mode, path, endpoints.Mandragora)
 	default:
 		return errors.New("unsupported provider")
 	}
@@ -111,6 +114,8 @@ func downloadAndApplySnapshot(provider, mode string, isCosmovisor bool) error {
 		return krews.DownloadSnapshotKrews(homeDirFlag, mode, isCosmovisor)
 	case "Jnode":
 		return jnode.DownloadSnapshotJnode(homeDirFlag, mode, endpoints.Jnode, isCosmovisor)
+	case "Mandragora":
+		return mandragora.DownloadSnapshotMandragora(homeDirFlag, mode, endpoints.Mandragora, isCosmovisor)
 	default:
 		return errors.New("unsupported provider")
 	}
