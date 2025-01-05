@@ -39,7 +39,7 @@ type itrocketServerData struct {
 	serverURL string
 }
 
-func DownloadSnapshotItrocket(homeDir, mode string) error {
+func DownloadSnapshotItrocket(homeDir, mode string, isCosmovisor bool) error {
 	var serverURL string
 	if strings.ToLower(mode) == "pruned" {
 		serverURL = bestPrunedServerURL
@@ -118,9 +118,11 @@ func DownloadSnapshotItrocket(homeDir, mode string) error {
 		return err
 	}
 
-	pterm.Info.Println("Starting Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
-		return err
+	if !isCosmovisor {
+		pterm.Info.Println("Starting Story and Story-Geth services...")
+		if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
+			return err
+		}
 	}
 
 	pterm.Success.Println("Snapshot successfully downloaded and applied from Itrocket.")

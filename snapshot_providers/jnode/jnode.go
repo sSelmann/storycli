@@ -134,7 +134,7 @@ func DownloadSnapshotToPathJnode(mode, path string, endpoint string) error {
 }
 
 // DownloadSnapshotJnode downloads and applies the Jnode snapshot
-func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
+func DownloadSnapshotJnode(homeDir, mode string, endpoint string, isCosmovisor bool) error {
 	pterm.Info.Println("Installing required packages for Jnode snapshot...")
 	if err := bash.RunCommand("sudo", "apt-get", "install", "wget", "lz4", "aria2", "pv", "-y"); err != nil {
 		return err
@@ -215,9 +215,11 @@ func DownloadSnapshotJnode(homeDir, mode string, endpoint string) error {
 		return err
 	}
 
-	pterm.Info.Println("Starting Story and Story-Geth services...")
-	if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
-		return err
+	if !isCosmovisor {
+		pterm.Info.Println("Starting Story and Story-Geth services...")
+		if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
+			return err
+		}
 	}
 
 	pterm.Success.Println("Snapshot successfully downloaded and applied from Jnode.")

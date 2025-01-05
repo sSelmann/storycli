@@ -27,14 +27,14 @@ func runDownloadSnapshot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse output-path: %w", err)
 	}
-	return RunDownloadSnapshotCore(pruningMode, outputPath, false, homeDirFlag)
+	return RunDownloadSnapshotCore(pruningMode, outputPath, false, homeDirFlag, false)
 }
 
-func CallRunDownloadSnapshotManually(pruningMode string, homedir string) error {
-	return RunDownloadSnapshotCore(pruningMode, "", true, homedir+".story")
+func CallRunDownloadSnapshotManually(pruningMode string, homedir string, isCosmovisor bool) error {
+	return RunDownloadSnapshotCore(pruningMode, "", true, homedir+".story", isCosmovisor)
 }
 
-func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, storyDir string) error {
+func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, storyDir string, isCosmovisor bool) error {
 	if !isManual {
 		PruningModeInformation()
 	}
@@ -87,7 +87,7 @@ func RunDownloadSnapshotCore(pruningMode, outputPath string, isManual bool, stor
 		}
 	}
 
-	return downloadAndApplySnapshot(selectedProvider, pruningMode)
+	return downloadAndApplySnapshot(selectedProvider, pruningMode, isCosmovisor)
 }
 
 func downloadToPath(provider, mode, path string) error {
@@ -103,14 +103,14 @@ func downloadToPath(provider, mode, path string) error {
 	}
 }
 
-func downloadAndApplySnapshot(provider, mode string) error {
+func downloadAndApplySnapshot(provider, mode string, isCosmovisor bool) error {
 	switch provider {
 	case "Itrocket":
-		return itrocket.DownloadSnapshotItrocket(homeDirFlag, mode)
+		return itrocket.DownloadSnapshotItrocket(homeDirFlag, mode, isCosmovisor)
 	case "Krews":
-		return krews.DownloadSnapshotKrews(homeDirFlag, mode)
+		return krews.DownloadSnapshotKrews(homeDirFlag, mode, isCosmovisor)
 	case "Jnode":
-		return jnode.DownloadSnapshotJnode(homeDirFlag, mode, endpoints.Jnode)
+		return jnode.DownloadSnapshotJnode(homeDirFlag, mode, endpoints.Jnode, isCosmovisor)
 	default:
 		return errors.New("unsupported provider")
 	}

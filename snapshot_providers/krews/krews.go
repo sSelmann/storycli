@@ -26,7 +26,7 @@ type KrewsSnapshotResponse struct {
 	Snapshots []SnapshotKrews `json:"details"`
 }
 
-func DownloadSnapshotKrews(homeDir, pruningMode string) error {
+func DownloadSnapshotKrews(homeDir, pruningMode string, isCosmovisor bool) error {
 	snapshotName := fmt.Sprintf("story_testnet_%s_snapshot", pruningMode)
 	snapshotURL := fmt.Sprintf("krews-snapshot:krews-1-eu/%s", snapshotName)
 	destDir := filepath.Join(homeDir, ".story")
@@ -56,6 +56,13 @@ func DownloadSnapshotKrews(homeDir, pruningMode string) error {
 	err = bash.RunCommand("mv", homeDir+"/.story/story/priv_validator_state.json.backup"+homeDir+"/.story/story/data/priv_validator_state.json")
 	if err != nil {
 		return err
+	}
+
+	if !isCosmovisor {
+		pterm.Info.Println("Starting Story and Story-Geth services...")
+		if err := bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth"); err != nil {
+			return err
+		}
 	}
 
 	pterm.Success.Println("Snapshot successfully downloaded from Krews.")

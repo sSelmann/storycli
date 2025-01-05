@@ -32,6 +32,7 @@ var (
 	prunedSnapshotSize  string
 	archiveSnapshotSize string
 	pruningMode         string
+	setupType           string
 )
 
 var recommendedCPU = 4
@@ -159,6 +160,12 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Select setup type
+	setupType, err := selectSetupType()
+	if err != nil {
+		pterm.Warning.Println(fmt.Sprintf("Failed to select setup type: %v", err))
+	}
+
 	// Pruning mode info message
 	snapshot.PruningModeInformation()
 
@@ -168,9 +175,18 @@ func runSetupNode(cmd *cobra.Command, args []string) error {
 	}
 
 	// Proceed with setup without Cosmovisor
-	err = setupWithoutCosmovisor(moniker, customPort, pruningMode)
-	if err != nil {
-		return err
+	if setupType == "without cosmovisor" {
+		err = setupWithoutCosmovisor(moniker, customPort, pruningMode)
+		if err != nil {
+			return err
+		}
+	} else if setupType == "with cosmovisor" {
+		err = setupWithCosmovisor(moniker, customPort, pruningMode)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("failed to get correct setup type value: %s", err)
 	}
 
 	return nil
@@ -266,140 +282,40 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 	}
 
 	// Download geth binary
-	pterm.Info.Println("Downloading geth binary...")
-	downloadBinary("geth")
-
-	// Make geth executable
-	pterm.Info.Println("Setting execute permissions for story-geth...")
-	err = bash.RunCommand("chmod", "+x", "story-geth")
-	if err != nil {
-		return err
-	}
-
-	// Move geth to ~/go/bin/
-	pterm.Info.Println("Moving story-geth to " + homeDir + "/go/bin/")
-	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story-geth")
-	if err != nil {
-		return err
-	}
-	err = bash.RunCommand("mkdir", "-p", homeDir+"/go/bin")
-	if err != nil {
-		return err
-	}
-	err = bash.RunCommand("mv", homeDir+"/story-geth", homeDir+"/go/bin/")
-	if err != nil {
-		return err
-	}
+	downloadBinary("geth", homeDir)
 
 	// Create necessary directories
-	pterm.Info.Println("Creating necessary directories...")
-	err = bash.RunCommand("bash", "-c", "[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
-	if err != nil {
-		return err
-	}
+	createNecessaryDirectories()
 
-	// go back to home directory
-	err = os.Chdir(homeDir)
-	if err != nil {
-		return err
-	}
-
-	pterm.Info.Println("Downloading story binary...")
-	downloadBinary("story")
-
-	// Move story binary to ~/go/bin/
-	pterm.Info.Println("Moving story binary to " + homeDir + "/go/bin/")
-	err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story")
-	if err != nil {
-		return err
-	}
-
-	err = bash.RunCommand("chmod", "+x", homeDir+"/story")
-	if err != nil {
-		return err
-	}
-
-	err = bash.RunCommand("mv", homeDir+"/story", homeDir+"/go/bin/")
-	if err != nil {
-		return err
-	}
+	// Download story binary
+	downloadBinary("story", homeDir)
 
 	// Initialize Story
-	pterm.Info.Println("Initializing Story node...")
-	err = bash.RunCommand(homeDir+"/go/bin/story", "init", "--moniker", moniker, "--network", "odyssey")
-	if err != nil {
-		return err
-	}
+	initializingStoryNode(homeDir, moniker)
 
 	// Configure seeds and peers
-	pterm.Info.Println("Configuring seeds and peers...")
-	err = configureSeedsAndPeersWithoutCosmovisor(homeDir)
+	err = configureSeedsAndPeers(homeDir)
 	if err != nil {
 		return err
 	}
 
 	// Download genesis and addrbook
-	pterm.Info.Println("Downloading genesis and addrbook...")
-	err = downloadGenesisAndAddrbookWithoutCosmovisor(homeDir)
+	err = downloadGenesisAndAddrbook(homeDir)
 	if err != nil {
 		return err
 	}
+
+	// Set config.toml path
+	configToml := fmt.Sprintf("%s/.story/story/config/config.toml", homeDir)
 
 	// Set custom ports in story.toml
-	pterm.Info.Println("Setting custom ports in story.toml...")
-	storyToml := fmt.Sprintf("%s/.story/story/config/story.toml", homeDir)
-	err = replaceInFile(storyToml, `:1317`, fmt.Sprintf(":%s317", customPort))
-	if err != nil {
-		return err
-	}
-	err = replaceInFile(storyToml, `:8551`, fmt.Sprintf(":%s551", customPort))
-	if err != nil {
-		return err
-	}
-
-	// Set custom ports in config.toml
-	pterm.Info.Println("Setting custom ports in config.toml...")
-	configToml := fmt.Sprintf("%s/.story/story/config/config.toml", homeDir)
-	publicIP, err := getPublicIP()
-	if err != nil {
-		return err
-	}
-	externalAddress := fmt.Sprintf("external_address = \"%s:%s656\"", publicIP, customPort)
-	err = replaceInFile(configToml, `:26658`, fmt.Sprintf(":%s658", customPort))
-	if err != nil {
-		return err
-	}
-	err = replaceInFile(configToml, `:26657`, fmt.Sprintf(":%s657", customPort))
-	if err != nil {
-		return err
-	}
-	err = replaceInFile(configToml, `:26656`, fmt.Sprintf(":%s656", customPort))
-	if err != nil {
-		return err
-	}
-	err = replaceInFile(configToml, `^external_address = .*`, externalAddress)
-	if err != nil {
-		return err
-	}
-	err = replaceInFile(configToml, `:26660`, fmt.Sprintf(":%s660", customPort))
-	if err != nil {
-		return err
-	}
+	settingCustomPorts(homeDir, configToml)
 
 	// Enable Prometheus
-	pterm.Info.Println("Enabling Prometheus...")
-	err = replaceInFile(configToml, "prometheus = false", "prometheus = true")
-	if err != nil {
-		return err
-	}
+	enablePrometheus(configToml)
 
-	// Set pruning mode if pruned
-	if strings.ToLower(pruningMode) == "pruned" {
-		err = replaceInFile(configToml, `^indexer *=.*`, `indexer = "null"`)
-		if err != nil {
-			return err
-		}
-	}
+	// Set indexer mode if pruned
+	setIndexer(configToml, pruningMode)
 
 	// Create systemd service files
 	pterm.Info.Println("Creating systemd service files...")
@@ -408,30 +324,25 @@ func setupWithoutCosmovisor(moniker, customPort, pruningMode string) error {
 		return err
 	}
 
-	// Download snapshot based on provider
-	pterm.Info.Println("Downloading snapshot...")
-	snapshot.CallRunDownloadSnapshotManually(pruningMode, homeDir)
-
 	// Enable and start services
-	pterm.Info.Println("Enabling and starting services...")
+	pterm.Info.Println("Enabling services...")
 	err = bash.RunCommand("sudo", "systemctl", "daemon-reload")
 	if err != nil {
 		return err
 	}
-	err = bash.RunCommand("sudo", "systemctl", "enable", "story", "story-geth")
-	if err != nil {
-		return err
-	}
-	err = bash.RunCommand("sudo", "systemctl", "restart", "story", "story-geth")
-	if err != nil {
-		return err
-	}
+
+	// Download snapshot based on provider
+	pterm.Info.Println("Downloading snapshot...")
+	snapshot.CallRunDownloadSnapshotManually(pruningMode, homeDir, false)
+
 	pterm.Success.Println("Node setup without Cosmovisor completed successfully.")
 
 	return nil
 }
 
-func configureSeedsAndPeersWithoutCosmovisor(homeDir string) error {
+func configureSeedsAndPeers(homeDir string) error {
+	pterm.Info.Println("Configuring seeds and peers...")
+
 	seeds := "51ff395354c13fab493a03268249a74860b5f9cc@story-testnet-seed.itrocket.net:26656"
 
 	// Fetch peers
@@ -460,7 +371,9 @@ func configureSeedsAndPeersWithoutCosmovisor(homeDir string) error {
 	return nil
 }
 
-func downloadGenesisAndAddrbookWithoutCosmovisor(homeDir string) error {
+func downloadGenesisAndAddrbook(homeDir string) error {
+	pterm.Info.Println("Downloading genesis and addrbook...")
+
 	endpoint, err := config.FetchItrocketRootEndpointFromAPI()
 	if err != nil {
 		return err
@@ -480,22 +393,7 @@ func downloadGenesisAndAddrbookWithoutCosmovisor(homeDir string) error {
 
 func createServiceFilesWithoutCosmovisor(homeDir, customPort string) error {
 	// Create geth service file
-	gethServiceContent := fmt.Sprintf(`[Unit]
-Description=Story Geth daemon
-After=network-online.target
-
-[Service]
-User=%s
-ExecStart=%s/go/bin/story-geth --odyssey --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
-Restart=on-failure
-RestartSec=3
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-`, os.Getenv("USER"), homeDir, customPort, customPort, customPort)
-
-	err := os.WriteFile("/etc/systemd/system/story-geth.service", []byte(gethServiceContent), 0644)
+	err := createGethServiceFile(homeDir, customPort)
 	if err != nil {
 		return err
 	}
@@ -519,6 +417,68 @@ WantedBy=multi-user.target
 `, os.Getenv("USER"), homeDir, homeDir)
 
 	err = os.WriteFile("/etc/systemd/system/story.service", []byte(storyServiceContent), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createServiceFilesWithCosmovisor(homeDir, customPort string) error {
+	// Create geth service file
+	err := createGethServiceFile(homeDir, customPort)
+	if err != nil {
+		return err
+	}
+
+	// Create story service file
+	storyServiceContent := fmt.Sprintf(`[Unit]
+Description=Story Consensus Client
+After=network.target
+
+[Service]
+User=%s
+Environment="DAEMON_NAME=story"
+Environment="DAEMON_HOME=%s/.story/story"
+Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=true"
+Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
+Environment="DAEMON_DATA_BACKUP_DIR=%s/.story/story/data"
+Environment="UNSAFE_SKIP_BACKUP=true"
+ExecStart=%s/go/bin/cosmovisor run run
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+`, os.Getenv("USER"), homeDir, homeDir, homeDir)
+
+	err = os.WriteFile("/etc/systemd/system/story.service", []byte(storyServiceContent), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createGethServiceFile(homeDir, customPort string) error {
+	// Create geth service file
+	gethServiceContent := fmt.Sprintf(`[Unit]
+Description=Story Geth daemon
+After=network-online.target
+
+[Service]
+User=%s
+ExecStart=%s/go/bin/story-geth --odyssey --syncmode full --http --http.api eth,net,web3,engine --http.vhosts '*' --http.addr 0.0.0.0 --http.port %s545 --authrpc.port %s551 --ws --ws.api eth,web3,net,txpool --ws.addr 0.0.0.0 --ws.port %s546
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+`, os.Getenv("USER"), homeDir, customPort, customPort, customPort)
+
+	err := os.WriteFile("/etc/systemd/system/story-geth.service", []byte(gethServiceContent), 0644)
 	if err != nil {
 		return err
 	}
@@ -583,13 +543,15 @@ func getLatestBinaryVersions(binary string) (string, error) {
 	return version, nil
 }
 
-func downloadBinary(binary string) error {
+func downloadBinary(binary string, homeDir string) error {
 	binaryVersion, err := getLatestBinaryVersions(binary)
 	if err != nil {
 		return fmt.Errorf("failed to fetch "+binary+" version: %v", err)
 	}
 
 	if binary == "geth" {
+		pterm.Info.Println("Downloading geth binary...")
+
 		downloadURL := fmt.Sprintf("https://github.com/piplabs/story-geth/releases/download/%s/geth-linux-amd64", binaryVersion)
 
 		err = bash.RunCommand("wget", "-O", "story-geth", downloadURL)
@@ -597,7 +559,31 @@ func downloadBinary(binary string) error {
 			return fmt.Errorf("failed to download Geth binary: %v", err)
 		}
 
+		// Make geth executable
+		pterm.Info.Println("Setting execute permissions for story-geth...")
+		err = bash.RunCommand("chmod", "+x", "story-geth")
+		if err != nil {
+			return err
+		}
+
+		// Move geth to ~/go/bin/
+		pterm.Info.Println("Moving story-geth to " + homeDir + "/go/bin/")
+		err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story-geth")
+		if err != nil {
+			return err
+		}
+		err = bash.RunCommand("mkdir", "-p", homeDir+"/go/bin")
+		if err != nil {
+			return err
+		}
+		err = bash.RunCommand("mv", homeDir+"/story-geth", homeDir+"/go/bin/")
+		if err != nil {
+			return err
+		}
+
 	} else if binary == "story" {
+		pterm.Info.Println("Downloading story binary...")
+
 		downloadURL := fmt.Sprintf("https://github.com/piplabs/story/releases/download/%s/story-linux-amd64", binaryVersion)
 
 		err = bash.RunCommand("wget", "-O", "story", downloadURL)
@@ -605,9 +591,271 @@ func downloadBinary(binary string) error {
 			return fmt.Errorf("failed to download Geth binary: %v", err)
 		}
 
+		// Move story binary to ~/go/bin/
+		pterm.Info.Println("Moving story binary to " + homeDir + "/go/bin/")
+		err = bash.RunCommand("rm", "-rf", homeDir+"/go/bin/story")
+		if err != nil {
+			return err
+		}
+
+		err = bash.RunCommand("chmod", "+x", homeDir+"/story")
+		if err != nil {
+			return err
+		}
+
+		err = bash.RunCommand("mv", homeDir+"/story", homeDir+"/go/bin/")
+		if err != nil {
+			return err
+		}
+
 	} else {
 		return fmt.Errorf("no valid binaries provided")
 	}
 
 	return nil
+}
+
+// setupWithCosmovisor sets up a Story node with Cosmovisor
+func setupWithCosmovisor(moniker, customPort, pruningMode string) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	os.Setenv("DAEMON_NAME", "story")
+	os.Setenv("DAEMON_HOME", fmt.Sprintf("%s/.story/story", homeDir))
+
+	// Add environment variables to .bash_profile
+	bashProfile := fmt.Sprintf("%s/.bash_profile", homeDir)
+	bashVars := []struct {
+		Key   string
+		Value string
+	}{
+		{"DAEMON_NAME", "story"},
+		{"DAEMON_HOME", fmt.Sprintf("%s/.story/story", homeDir)},
+	}
+
+	for _, env := range bashVars {
+		exportLine := fmt.Sprintf("export %s=%s", env.Key, env.Value)
+		if err := ensureLineInFile(bashProfile, exportLine); err != nil {
+			return fmt.Errorf("failed to update .bash_profile: %v", err)
+		}
+	}
+
+	// Install Cosmovisor
+	pterm.Info.Println("Installing Cosmovisor...")
+	if err := bash.RunCommand("env", "PATH=$PATH:/usr/local/go/bin:$HOME/go/bin", "go", "install", "cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@latest"); err != nil {
+		return fmt.Errorf("failed to install Cosmovisor: %v", err)
+	}
+
+	pterm.Success.Println("Cosmovisor installed successfully.")
+
+	// Initialize Cosmovisor directories
+	pterm.Info.Println("Initializing Cosmovisor directories...")
+
+	latestBinaryVersion, err := getLatestBinaryVersions("story")
+	if err != nil {
+		return err
+	}
+
+	var upgradesDir = fmt.Sprintf("%s/.story/story", homeDir) + fmt.Sprintf("/cosmovisor/upgrades/%s/bin", latestBinaryVersion)
+	if err := bash.RunCommand("mkdir", "-p", upgradesDir); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", upgradesDir, err)
+	}
+
+	// Download get Binary
+	downloadBinary("geth", homeDir)
+
+	// Download and configure binaries
+	downloadBinary("story", homeDir)
+
+	if err := bash.RunCommand(homeDir+"/go/bin/cosmovisor", "init", homeDir+"/go/bin/story"); err != nil {
+		return fmt.Errorf("failed to copy binary to upgrades directory: %v", err)
+	}
+
+	if err := bash.RunCommand("cp", homeDir+"/go/bin/story", upgradesDir+"/story"); err != nil {
+		return fmt.Errorf("failed to copy binary to upgrades directory: %v", err)
+	}
+
+	// Initialize Story
+	initializingStoryNode(homeDir, moniker)
+
+	// Configure seeds and peers
+	err = configureSeedsAndPeers(homeDir)
+	if err != nil {
+		return err
+	}
+
+	// Download genesis and addrbook
+	err = downloadGenesisAndAddrbook(homeDir)
+	if err != nil {
+		return err
+	}
+
+	// Set config.toml path
+	configToml := fmt.Sprintf("%s/.story/story/config/config.toml", homeDir)
+
+	// Set custom ports in story.toml
+	settingCustomPorts(homeDir, configToml)
+
+	// Set indexer mode if pruned
+	setIndexer(configToml, pruningMode)
+
+	// Update systemd service file
+	createServiceFilesWithCosmovisor(homeDir, customPort)
+
+	// Enable and start services
+	pterm.Info.Println("Enabling services...")
+	if err := bash.RunCommand("sudo", "systemctl", "daemon-reload"); err != nil {
+		return fmt.Errorf("failed to reload systemd: %v", err)
+	}
+	if err := bash.RunCommand("sudo", "systemctl", "enable", "story", "story-geth"); err != nil {
+		return fmt.Errorf("failed to enable story service: %v", err)
+	}
+
+	// Download snapshot based on provider
+	pterm.Info.Println("Downloading snapshot...")
+	snapshot.CallRunDownloadSnapshotManually(pruningMode, homeDir, true)
+
+	pterm.Success.Println("Cosmovisor setup completed successfully.")
+
+	// Inform the user to source the .bash_profile manually
+	coloredText := pterm.FgRed.Sprint("source ~/.bash_profile")
+	coloredRestart := pterm.FgRed.Sprint("scli restart --all")
+	pterm.Warning.Println("Please run", coloredText, "or restart your terminal to apply the environment variables.")
+	pterm.Warning.Println("Then run the", coloredRestart, "command to start cosmovisor.")
+
+	return nil
+}
+
+// ensureLineInFile checks if a line exists in a file, and appends it if not
+func ensureLineInFile(filename, line string) error {
+	// Read the file
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File does not exist, create it
+			return appendToFile(filename, line)
+		}
+		return err
+	}
+
+	content := string(data)
+	if !strings.Contains(content, line) {
+		return appendToFile(filename, line)
+	}
+	return nil
+}
+
+// appendToFile appends a single line to a file
+func appendToFile(filename, line string) error {
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(line + "\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func createNecessaryDirectories() error {
+	// Create necessary directories
+	pterm.Info.Println("Creating necessary directories...")
+	err := bash.RunCommand("bash", "-c", "[ ! -d \"$HOME/.story/story\" ] && mkdir -p \"$HOME/.story/story\"")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func initializingStoryNode(homeDir string, moniker string) error {
+
+	pterm.Info.Println("Initializing Story node...")
+	err := bash.RunCommand(homeDir+"/go/bin/story", "init", "--moniker", moniker, "--network", "odyssey")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func settingCustomPorts(homeDir string, configToml string) error {
+	pterm.Info.Println("Setting custom ports in story.toml...")
+	storyToml := fmt.Sprintf("%s/.story/story/config/story.toml", homeDir)
+	err := replaceInFile(storyToml, `:1317`, fmt.Sprintf(":%s317", customPort))
+	if err != nil {
+		return err
+	}
+	err = replaceInFile(storyToml, `:8551`, fmt.Sprintf(":%s551", customPort))
+	if err != nil {
+		return err
+	}
+
+	// Set custom ports in config.toml
+	pterm.Info.Println("Setting custom ports in config.toml...")
+	publicIP, err := getPublicIP()
+	if err != nil {
+		return err
+	}
+	externalAddress := fmt.Sprintf("external_address = \"%s:%s656\"", publicIP, customPort)
+	err = replaceInFile(configToml, `:26658`, fmt.Sprintf(":%s658", customPort))
+	if err != nil {
+		return err
+	}
+	err = replaceInFile(configToml, `:26657`, fmt.Sprintf(":%s657", customPort))
+	if err != nil {
+		return err
+	}
+	err = replaceInFile(configToml, `:26656`, fmt.Sprintf(":%s656", customPort))
+	if err != nil {
+		return err
+	}
+	err = replaceInFile(configToml, `^external_address = .*`, externalAddress)
+	if err != nil {
+		return err
+	}
+	err = replaceInFile(configToml, `:26660`, fmt.Sprintf(":%s660", customPort))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func enablePrometheus(configToml string) error {
+	pterm.Info.Println("Enabling Prometheus...")
+	err := replaceInFile(configToml, "prometheus = false", "prometheus = true")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setIndexer(configToml string, pruningMode string) error {
+	if strings.ToLower(pruningMode) == "pruned" {
+		err := replaceInFile(configToml, `^indexer *=.*`, `indexer = "null"`)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func selectSetupType() (string, error) {
+	if setupType == "" {
+		pmPrompt := promptui.Select{
+			Label: "Select setup type",
+			Items: []string{"without cosmovisor", "with cosmovisor"},
+		}
+		_, pmResult, err := pmPrompt.Run()
+		if err != nil {
+			return "", err
+		}
+		setupType = pmResult
+	}
+	return setupType, nil
 }
