@@ -1,4 +1,3 @@
-
 # StoryCLI
 
 `StoryCLI` is a command line interface designed to manage various operations related to Story Protocol node management. The tool includes commands for setting up nodes, starting, stopping and configuring services, as well as managing snapshots and logs.
@@ -13,7 +12,7 @@ sudo -v ; curl https://krews-eu.krews-storage.xyz/install.sh | sudo bash
 
 ### Prerequisites
 
-Ensure that you have Go installed before running the installation script. The installation script will automatically install go if it is not installed. You can check if Go is installed using:
+Ensure that you have Go installed before running the installation script. The installation script will automatically install Go if it is not installed. You can check if Go is installed using:
 
 ```bash
 go version
@@ -33,44 +32,41 @@ scli
 
 ### Commands
 
-
 #### `setup node`
 
-Sets up an easy story node setup by asking you questions.
+Sets up an easy Story node setup by asking you questions. This includes options for `pruned` and `archive` pruning modes. The command also supports setting up the node with or without Cosmovisor.
 
 Usage:
 
 ```bash
 scli setup node
 ```
-example outout:
+
+Example output:
 
 ```bash
  INFO  Checking system resources...
- INFO  CPU cores: 4
- WARNING  You have 7941 MB of RAM. Recommended is 16384 MB.
- INFO  Disk space: 231 GB
+ INFO  CPU cores: 8
+ WARNING  You have 15988 MB of RAM. Recommended is 16384 MB.
+ INFO  Disk space: 309 GB
 ✔ Yes
+ INFO  Checking if Story and Story-Geth services are active...
+ INFO  Stopping Story services...
  SUCCESS  Existing installation removed.
- INFO  Fetching snapshot sizes from Krews...
 Enter your moniker: test
 Enter the first two digits of the custom port (default 26): : 23
- INFO
-       Pruning Mode Information:
- - Pruned Mode: Stores only recent blockchain data, reducing disk usage. Snapshot size: 121G
- - Archive Mode: Stores the entire blockchain history, requiring more disk space. Snapshot size: 495G
-
+✔ without cosmovisor
+ INFO  Pruning Mode Information:
+ INFO   - Pruned Mode: Stores only recent blocks, reducing disk usage.
+ INFO   - Archive Mode: Stores the entire chain history, requiring more disk space.
 ✔ pruned
-✔ Krews
  INFO  Navigating to home directory...
  INFO  Downloading geth binary...
- INFO  Setting execute permissions for geth...
- INFO  Moving geth to ~/go/bin/
+ INFO  Setting execute permissions for story-geth...
+ INFO  Moving story-geth to /root/go/bin/
  INFO  Creating necessary directories...
- INFO  Cloning Story repository...
- INFO  Checking out version v0.11.0...
- INFO  Building Story binary...
- INFO  Moving story binary to ~/go/bin/
+ INFO  Downloading story binary...
+ INFO  Moving story binary to /root/go/bin/
  INFO  Initializing Story node...
  INFO  Configuring seeds and peers...
  INFO  Downloading genesis and addrbook...
@@ -78,29 +74,90 @@ Enter the first two digits of the custom port (default 26): : 23
  INFO  Setting custom ports in config.toml...
  INFO  Enabling Prometheus...
  INFO  Creating systemd service files...
+ INFO  Enabling services...
  INFO  Downloading snapshot...
- INFO  Installing required packages for Krews snapshot...
+ INFO  Fetching snapshot data for providers (mode=pruned)...
+Jnode - ( mode: pruned | size: 58.92G | height: 1770319 | 41m )
+ INFO  Installing required packages for Jnode snapshot...
  INFO  Stopping Story and Story-Geth services...
- INFO  Backup priv_validator_state.json...
- INFO  Removing old Story data and unpacking new snapshot...
+ INFO  Backing up priv_validator_state.json...
+ INFO  Removing old Story and Geth data...
  INFO  Downloading Story snapshot...
-Downloading: 7.08 GiB / 7.08 GiB [==============================================================] 100 %
- INFO  Extracting Story snapshot...
- INFO  Removing old Geth data and downloading new Geth snapshot...
+[4.1GiB/4.1GiB(100%) CN:10 DL:243MiB]ETA:1s]
+ INFO  Download complete!
  INFO  Downloading Geth snapshot...
-Downloading: 41.32 GiB / 41.32 GiB [==============================================================] 100 %
- INFO  extracting Geth snapshot...
+[54GiB/54GiB(100%) CN:2 DL:102MiB]]ETA:1s]
+ INFO  Download complete!
+ INFO  Extracting Story snapshot...
+ INFO  Extracting Geth snapshot...
  INFO  Restoring priv_validator_state.json...
  INFO  Starting Story and Story-Geth services...
- SUCCESS  Snapshot successfully downloaded and applied from Krews.
- INFO  Enabling and starting services...
+ SUCCESS  Snapshot successfully downloaded and applied from Jnode.
  SUCCESS  Node setup without Cosmovisor completed successfully.
-
 ```
+
+#### `snapshot providers`
+
+Lists available snapshot providers and displays their data in a table format. Separate tables are created for `pruned` and `archive` modes.
+
+Usage:
+
+```bash
+scli snapshot providers
+```
+
+Example output:
+
+```bash
+# Pruned Snapshots
+
+Provider   | Total Size | Block Height | Time Ago
+Itrocket   | 63.70G     | 1773764      | 1h 4m ago
+Krews      | 197G       | 1773702      | 37m ago
+Jnode      | 58.92G     | 1770319      | 4h 39m ago
+Mandragora | 1.24M      | unknown      | unknown
+
+# Archive Snapshots
+
+Provider   | Total Size | Block Height | Time Ago
+Itrocket   | 265.00G    | 1768887      | 6h 14m ago
+Krews      | 304G       | 1772449      | 2h 9m ago
+Jnode      | 265.35G    | 1770327      | 4h 38m ago
+Mandragora | 60.60G     | 1773606      | 1h 10m ago
+```
+
+#### `snapshot download`
+
+Downloads snapshots from a selected provider and applies them to initialize or update your Story node.
+
+Usage:
+
+```bash
+scli snapshot download
+```
+
+Example output:
+```bash
+ INFO  Pruning Mode Information:
+ INFO   - Pruned Mode: Stores only recent blocks, reducing disk usage.
+ INFO   - Archive Mode: Stores the entire chain history, requiring more disk space.
+✔ pruned
+ INFO  Fetching snapshot data for providers (mode=pruned)...
+Use the arrow keys to navigate: ↓ ↑ → ← 
+Select the snapshot provider
+  ✔ Itrocket ( mode: pruned | size: 63.70G | height: 1773764 | 2h 17m ago )
+    Jnode ( mode: pruned | size: 58.92G | height: 1770319 | 5h 53m )
+    Mandragora ( mode: pruned | size: 1.24M | height: unknown | unknown )
+    Krews ( mode: pruned | size: 197G | height: 1773702 | 1h 50m ago )
+```
+Flags:
+
+- `--output-path`: Download snapshot directly to the specified path.
+- `--home`: Specify the home directory for the Story node.
 
 #### `logs`
 
-This command retrieves and displays story and geth logs from the services.
+Retrieves and displays logs for the Story and Geth services.
 
 Usage:
 
@@ -108,15 +165,23 @@ Usage:
 scli logs [service]
 ```
 
+Flags:
+
+- `--lines`: Number of log lines to display (default: 20).
+
 #### `restart`
 
-Restarts Story node. Commonly used to refresh the system after changes or errors.
+Restarts Story and Story-Geth services. Supports restarting both services together or individually.
 
 Usage:
 
 ```bash
 scli restart
 ```
+
+Flags:
+
+- `--all`: Restart both services together.
 
 #### `set`
 
@@ -138,49 +203,9 @@ Usage:
 scli show [configuration param]
 ```
 
-#### `snapshot`
-
-Downloads snapshots from a snapshot provider and installs them on Story node data
-
-Usage:
-
-```bash
-scli snapshot
-```
-example output:
-
-```bash
- INFO  Fetching snapshot sizes from Krews...
- INFO
-       Pruning Mode Information:
- - Pruned Mode: Stores only recent blockchain data, reducing disk usage. Snapshot size: 121G
- - Archive Mode: Stores the entire blockchain history, requiring more disk space. Snapshot size: 496G
-
-✔ pruned
-✔ Krews
- INFO  stopping services...
- INFO  Fetching snapshot names from Krews...
- INFO  Installing required packages for Krews snapshot...
- INFO  Stopping Story and Story-Geth services...
- INFO  Backup priv_validator_state.json...
- INFO  Removing old Story data...
- INFO  Downloading Story snapshot...
-Downloading: 7.08 GiB / 7.08 GiB [==============================================================] 100 %
- INFO  Extracting Story snapshot...
- INFO  Removing old Geth data and downloading new Geth snapshot...
- INFO  Downloading Geth snapshot...
-Downloading: 41.32 GiB / 41.32 GiB [==============================================================] 100 %
- INFO  extracting Geth snapshot...
- INFO  Restoring priv_validator_state.json...
- INFO  Starting Story and Story-Geth services...
- SUCCESS  Snapshot successfully downloaded and applied from Krews.
- INFO  run scli restart to restart the systemd services and apply the new values
-
-```
-
 #### `status`
 
-Checks the status of Story and Geth services.
+Checks the status of Story and Story-Geth services.
 
 Usage:
 
@@ -190,7 +215,7 @@ scli status
 
 #### `stop`
 
-Stops the running Story and Geth services.
+Stops the running Story and Story-Geth services.
 
 Usage:
 
@@ -200,13 +225,22 @@ scli stop
 
 #### `update`
 
-Updates Story and Geth binaries.
+Updates Story and Geth binaries to the latest version.
 
 Usage:
 
 ```bash
 scli update
 ```
+
+
+## Features
+
+- **Snapshot Management:** Download and apply snapshots from multiple providers (Itrocket, Krews, Jnode, Mandragora).
+- **Node Setup:** Streamlined setup for Story nodes, with options for `pruned` or `archive` modes.
+- **Logs and Status:** View logs and check the status of Story and Story-Geth services.
+- **Restart and Stop Commands:** Easily manage node services.
+- **Custom Port and Cosmovisor Support:** Flexibility to configure ports and set up with or without Cosmovisor.
 
 ## License
 
